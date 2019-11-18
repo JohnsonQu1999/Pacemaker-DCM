@@ -23,11 +23,12 @@
   # 4.) replace edit_XXX's with 1 function - PSEUDO CODE WRITTEN
   # 5.) add all buttons in create_Welcome_Window
   # This method would be called 'refreshGUI'
+# Create 'update' method to update screen when values change
 # Create more descriptive error messages
 # Serial comms b/w DCM and board
   # Transmit parameter and mode data
   # Conduct error checking
-  # Implement egram
+# Implement egram
 
 #===IMPORT===#
 from tkinter import*
@@ -38,48 +39,55 @@ class Welcome():
 	def __init__(self,screen): #Constructor, sets up inital values
 		self.modeDict = {
 			"Off":"0000000000000000000000000",
-			"AAT":"1100001010100110000000000",
-			"VVT":"1100000101011000000000000",
+			"AAT":"1100001010100110000000000", # Not using
+			"VVT":"1100000101011000000000000", # Not using
 			"AOO":"1100001010000000000000000",
 			"AAI":"1100001010100110110000000",
 			"VOO":"1100000101000000000000000",
 			"VVI":"1100000101011000110000000",
-			"VDD":"1101100101011001011110000",
+			"VDD":"1101100101011001011110000", # Not using
 			"DOO":"1101001111000000000000000",
-			"DDI":"1101001111111110000000000",
-			"DDD":"1101111111111111111110000",
+			"DDI":"1101001111111110000000000", # Not using
+			"DDD":"1101111111111111111110000", # Not using
 			"AOOR":"1110001010000000000001111",
 			"AAIR":"1110001010100110110001111",
 			"VOOR":"1110000101000000000001111",
 			"VVIR":"1110000101011000110001111",
-			"VDDR":"1111100101011001011111111",
+			"VDDR":"1111100101011001011111111", # Not using
 			"DOOR":"1111001111000000000001111",
-			"DDIR":"1111001111111110000001111",
-			"DDDR":"1111111111111111111111111"
+			"DDIR":"1111001111111110000001111", # Not using
+			"DDDR":"1111111111111111111111111" # Not using
 		}
-		self.mode = "DDD"
+		self.mode = "DDD"  # Not using DDD...
 
 		self.lowerRateLimitRange = list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5))
 		self.upperRateLimitRange = list(range(50,176,5))
 		# self.maxSensorRateRange = list(range(50,176,5))
 		# self.fixedAVDelayRange = list(range(50,301,10))
-		# self.dyanmicAVDelayrange = list('OFF','ON')
+		# self.dyanmicAVDelayRange = list('OFF','ON')
+		# self.minDynamicAVDelayRange = list(range(30,101,10))
+		# self.sensedAVDelayOffsetRange = list(('OFF',-10,-20,-30,-40,-50,-60,-70,-80,-90,-100))
 		self.avPulseAmpRegRange = list(('OFF',0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0))
+		# self.avPulseAmpUnregRange = list(('OFF',1.25,2.5,3.75,5))
 		self.avPulseWidthRange = list((0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9))
-		# self.aSensitivityRange = 
-		# self.vSensitivityrange = 
+		# self.aSensitivityRange = list((0.25,0.5,0.75))+list(range(1,10.1,0.5))
+		# self.vSensitivityRange = list((0.25,0.5,0.75))+list(range(1,10.1,0.5))
 		self.VRPRange = list(range(150,510,10))
 		self.ARPRange = list(range(150,510,10))
-		# self.pvarpExetnsionRange = 
-		# self.hysRange = 
-		# self.rateSmoothingRange = 
-		# self.atrDurationRange = 
-		# self. atrFallBackModeRange =
-		# self.atrFallBacktimeRange =
-		# self.activityThresholdRange = 
-		# self.reactionTimeRange = 
-		# self.responseFactorRange =
-		# self.recoveryTimeRange = 
+		# self.pvarp = list(range(150,501,10))
+		# self.pvarpExtensionRange list(('OFF'))+list(range(50,401,50))
+		# self.hysRange = list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5))
+		# self.rateSmoothingRange = list(('OFF',3,6,9,12,15,18,21,25))
+		# self.atrModeRange = list(('OFF','ON'))
+		# self.atrDurationCyclesRange = list((10))
+		# self.atrDurationLowerRange = list(range(20,81,20))
+		# self.atrDurationUpperRange = list(range(100,2001,100))
+		# self.atrFallBackTimeRange = list(range(1,6,1))
+		# self.ventricularBlankingRange = list(range(30,61,10))
+		# self.activityThresholdRange = list(('V-LOW','LOW','MED-LOW','MED','MED-HIGH','HIGH','V-HIGH'))
+		# self.reactionTimeRange = list(range(10,51,10))
+		# self.responseFactorRange = list(range(1,17,1))
+		# self.recoveryTimeRange = list(range(2,17,1))
 
 		self.progParam = []
 		self.commsStatus = 1 # 0 means good status
