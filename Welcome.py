@@ -61,9 +61,9 @@ class Welcome():
 
 		self.lowerRateLimitRange = list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5))
 		self.upperRateLimitRange = list(range(50,176,5))
-		# self.maximumSensorRateRange =
-		# self.fixedAVDelayRange = 
-		# self.dyanmicAVDelayrange =  
+		# self.maxSensorRateRange = list(range(50,176,5))
+		# self.fixedAVDelayRange = list(range(50,301,10))
+		# self.dyanmicAVDelayrange = list('OFF','ON')
 		self.avPulseAmpRegRange = list(('OFF',0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0))
 		self.avPulseWidthRange = list((0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9))
 		# self.aSensitivityRange = 
@@ -279,6 +279,9 @@ class Welcome():
 			self.progParam[3][3]=self.spinbox_ventPulseWidth.get()
 			self.progParam[3][4]=self.spinbox_VRP.get()
 			# print(self.progParam[3])
+
+	def __edit_MODE(self):
+		self.mode = self.mode
 
 	def __edit_NONE(self): # Displays the correct labels & spinboxes, and activates/deactivates the save/reset to nominal buttons depending on the mode. The next functions are similar
 
