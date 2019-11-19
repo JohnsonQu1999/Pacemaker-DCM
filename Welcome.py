@@ -38,56 +38,61 @@ from rw import*
 class Welcome():
 	def __init__(self,screen): #Constructor, sets up inital values
 		self.modeDict = {
-			"Off":"000000000000000000000000000000",
-			"AAT":"110000010101010011000000000000", # Not using
-			"VVT":"110000001010101100000000000000", # Not using
-			"AOO":"110000010101000000000000000000",
-			"AAI":"110000010101010011011000000000",
-			"VOO":"110000001010100000000000000000",
-			"VVI":"110000001010101100011000000000",
-			"VDD":"110111001010101100101111110000", # Not using
-			"DOO":"110100011111100000000000000000",
-			"DDI":"110100011111111111000000000000", # Not using
-			"DDD":"110111111111111111111111110000", # Not using
-			"AOOR":"111000010101000000000000001111",
-			"AAIR":"111000010101010011011000001111",
-			"VOOR":"111000001010100000000000001111",
-			"VVIR":"111000001010101100011000001111",
-			"VDDR":"111111001010101100101111111111", # Not using
-			"DOOR":"111100011111100000000000001111",
-			"DDIR":"111100011111111111000000001111", # Not using
-			"DDDR":"111111111111111111111111111111" # Not using
+			"Off":"0000000000000000000000000000000",
+			"AAT":"1100000101010100110000000000000", # Not using
+			"VVT":"1100000010101011000000000000000", # Not using
+			"AOO":"1100000101010000000000000000000",
+			"AAI":"1100000101010100110110000000000",
+			"VOO":"1100000010101000000000000000000",
+			"VVI":"1100000010101011000110000000000",
+			"VDD":"1101110010101011001011111100000", # Not using
+			"DOO":"1101000111111000000000000000000",
+			"DDI":"1101000111111111110000000000000", # Not using
+			"DDD":"1101111111111111111111111100000", # Not using
+			"AOOR":"1110000101010000000000000001111",
+			"AAIR":"1110000101010100110110000001111",
+			"VOOR":"1110000010101000000000000001111",
+			"VVIR":"1110000010101011000110000001111",
+			"VDDR":"1111110010101011001011111111111", # Not using
+			"DOOR":"1111000111111000000000000001111",
+			"DDIR":"1111000111111111110000000001111", # Not using
+			"DDDR":"1111111111111111111111111111111"  # Not using
 		}
 		self.mode = "DDD"  # Not using DDD...
 
-		self.lowerRateLimitRange = list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5))
-		self.upperRateLimitRange = list(range(50,176,5))
-		self.maxSensorRateRange = list(range(50,176,5))
-		self.fixedAVDelayRange = list(range(50,301,10))
-		self.dyanmicAVDelayRange = list(('OFF','ON'))
-		self.minDynamicAVDelayRange = list(range(30,101,10))
-		self.sensedAVDelayOffsetRange = list(('OFF',-10,-20,-30,-40,-50,-60,-70,-80,-90,-100))
-		self.avPulseAmpRegRange = list(('OFF',0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0))
-		self.avPulseAmpUnregRange = list(('OFF',1.25,2.5,3.75,5))
-		self.avPulseWidthRange = list((0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9))
-		self.aSensitivityRange = list((0.25,0.5,0.75))+list((1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10))
-		self.vSensitivityRange = list((0.25,0.5,0.75))+list((1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10))
-		self.VRPRange = list(range(150,510,10))
-		self.ARPRange = list(range(150,510,10))
-		self.pvarpRange = list(range(150,501,10))
-		self.pvarpExtensionRange = list(('OFF'))+list(range(50,401,50))
-		self.hysRange = list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5))
-		self.rateSmoothingRange = list(('OFF',3,6,9,12,15,18,21,25))
-		self.atrFallBackModeRange = list(('OFF','ON'))
-		self.atrDurationCyclesRange = list(range(10,11,1))
-		self.atrDurationLowerRange = list(range(20,81,20))
-		self.atrDurationUpperRange = list(range(100,2001,100))
-		self.atrFallBackTimeRange = list(range(1,6,1))
-		self.ventricularBlankingRange = list(range(30,61,10))
-		self.activityThresholdRange = list(('V-LOW','LOW','MED-LOW','MED','MED-HIGH','HIGH','V-HIGH'))
-		self.reactionTimeRange = list(range(10,51,10))
-		self.responseFactorRange = list(range(1,17,1))
-		self.recoveryTimeRange = list(range(2,17,1))
+		self.lowerRateLimitRange = list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5)) 		#0
+		self.upperRateLimitRange = list(range(50,176,5))												#1
+		self.maxSensorRateRange = list(range(50,176,5))													#2
+		self.fixedAVDelayRange = list(range(50,301,10))													#3
+		self.dyanmicAVDelayRange = list(('OFF','ON'))													#4
+		self.minDynamicAVDelayRange = list(range(30,101,10))											#5
+		self.sensedAVDelayOffsetRange = list(('OFF',-10,-20,-30,-40,-50,-60,-70,-80,-90,-100))			#6
+		self.avPulseAmpRegRange = list(('OFF',0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0)) #7,8
+		self.avPulseAmpUnregRange = list(('OFF',1.25,2.5,3.75,5))																																#9,10
+		self.avPulseWidthRange = list((0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9))																		#11,12
+		self.aSensitivityRange = list((0.25,0.5,0.75))+list((1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10))																			#13
+		self.vSensitivityRange = list((0.25,0.5,0.75))+list((1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10))																			#14
+		self.VRPRange = list(range(150,510,10))															#15
+		self.ARPRange = list(range(150,510,10))															#16
+		self.pvarpRange = list(range(150,501,10))														#17
+		self.pvarpExtensionRange = list(('OFF'))+list(range(50,401,50))									#18
+		self.hysRange = ['OFF']+list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5))					#19
+		self.rateSmoothingRange = list(('OFF',3,6,9,12,15,18,21,25))									#20
+		self.atrFallBackModeRange = list(('OFF','ON'))													#24
+		self.atrDurationCyclesRange = list(range(10,11,1))												#21
+		self.atrDurationLowerRange = list(range(20,81,20))												#22
+		self.atrDurationUpperRange = list(range(100,2001,100))											#23
+		self.atrFallBackTimeRange = list(range(1,6,1))													#25
+		self.ventricularBlankingRange = list(range(30,61,10))											#26
+		self.activityThresholdRange = list(('V-LOW','LOW','MED-LOW','MED','MED-HIGH','HIGH','V-HIGH'))	#27
+		self.reactionTimeRange = list(range(10,51,10))													#28
+		self.responseFactorRange = list(range(1,17,1))													#29
+		self.recoveryTimeRange = list(range(2,17,1))													#30
+		self.rangesParam = list((self.lowerRateLimitRange,self.upperRateLimitRange,self.maxSensorRateRange,self.fixedAVDelayRange,self.dyanmicAVDelayRange,self.minDynamicAVDelayRange,
+			self.sensedAVDelayOffsetRange,self.avPulseAmpRegRange,self.avPulseAmpRegRange,self.avPulseAmpUnregRange,self.avPulseAmpUnregRange,self.avPulseWidthRange,self.avPulseWidthRange,
+			self.aSensitivityRange,self.vSensitivityRange,self.VRPRange,self.ARPRange,self.pvarpRange,self.pvarpExtensionRange,self.hysRange,self.rateSmoothingRange,self.atrDurationCyclesRange,
+			self.atrDurationLowerRange,self.atrDurationUpperRange,self.atrFallBackModeRange,self.atrFallBackTimeRange,self.ventricularBlankingRange,self.activityThresholdRange,
+			self.reactionTimeRange,self.responseFactorRange,self.recoveryTimeRange))
 
 		self.progParam = []
 
@@ -171,7 +176,166 @@ class Welcome():
 			elif(self.mode==3):
 				self.__edit_VVI()
 
+	def __get_Vals(self): # Saves relevant spinbox data into self.progParam depending on what pacing mode the user is editing
+
+		# Example code if we use a code to represent each mode
+		# We could use a dictionary to map modes to their code
+		# for i in numParams:
+		# 	if(code[i]==1)
+		# 		self.progParam[mode][i]=spinboxParams[i].get()
+
+		if(self.mode==0):
+			self.progParam[0][0]=self.spinbox_LowerRateLimit.get()
+			self.progParam[0][1]=self.spinbox_UpperRateLimit.get()
+			self.progParam[0][2]=self.spinbox_atrPulseAmpReg.get()
+			self.progParam[0][3]=self.spinbox_atrPulseWidth.get()
+			# print(self.progParam[0])
+		elif(self.mode==1):
+			self.progParam[1][0]=self.spinbox_LowerRateLimit.get()
+			self.progParam[1][1]=self.spinbox_UpperRateLimit.get()
+			self.progParam[1][2]=self.spinbox_ventPulseAmpReg.get()
+			self.progParam[1][3]=self.spinbox_ventPulseWidth.get()
+			# print(self.progParam[1])
+		elif(self.mode==2):
+			self.progParam[2][0]=self.spinbox_LowerRateLimit.get()
+			self.progParam[2][1]=self.spinbox_UpperRateLimit.get()
+			self.progParam[2][2]=self.spinbox_atrPulseAmpReg.get()
+			self.progParam[2][3]=self.spinbox_atrPulseWidth.get()
+			self.progParam[2][4]=self.spinbox_ARP.get()
+			# print(self.progParam[2])
+		elif(self.mode==3):
+			self.progParam[3][0]=self.spinbox_LowerRateLimit.get()
+			self.progParam[3][1]=self.spinbox_UpperRateLimit.get()
+			self.progParam[3][2]=self.spinbox_ventPulseAmpReg.get()
+			self.progParam[3][3]=self.spinbox_ventPulseWidth.get()
+			self.progParam[3][4]=self.spinbox_VRP.get()
+			# print(self.progParam[3])
+
+	def __check_In_Range(self): # Checks if the current data stored in the spinboxes is valid. NOTE: Checks spinboxes and NOT self.progParam as we don't want to potentially overwrite good data with bad data
+		# return 0 = in range
+		# return 1 = out of range
+
+		# Example code if we use a code to represent each mode
+		# We could use a dictionary to map modes to their code
+		# inRange = 0
+		# for i in numParams:
+		# 	if(!((code[i]==1)&&(self.spinboxParams[i].get() in paramRanges[i]))): #paramRanges is an array that contains the range of every parameter #spinboxParams is an array of spinbox widgets #by extension, we could have an array of label widgets
+		# 		inRange += 1
+
+		# print(int(self.spinbox_LowerRateLimit.get()))
+		# print(self.lowerRateLimitRange)
+		# print((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange))
+
+		index = 0
+
+		for check in self.modeDict[self.mode]:
+			# print(index)
+			if(check == '1'):
+				try:
+					if((int(self.spinboxParams[index].get()) in self.rangesParam[index]) == 0):
+						# print("failed on index "+str(index)+" in first try")
+						# print(self.spinboxParams[index].get())
+						# print(self.rangesParam[index])
+						return 1
+				except:
+					# print("is not int")
+					try:
+						if((float(self.spinboxParams[index].get()) in self.rangesParam[index]) == 0):
+							# print("failed on index "+str(index)+" in second try")
+							# print(self.spinboxParams[index].get())
+							# print(self.rangesParam[index])
+							return 1
+					except:
+						print("is not float")
+						try:
+							if((self.spinboxParams[index].get() in self.rangesParam[index]) == 0):
+								# print("failed on index "+str(index)+" in third try")
+								# print(self.spinboxParams[index].get())
+								# print(self.rangesParam[index])
+								return 1
+						except:
+							# print("failed on index "+str(index)+" in except")
+							return 1
+
+			index+=1
+
+		return 0
+
+		# try:
+		# 	if(self.mode==0):
+		# 		if((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange) == 0):
+		# 			inRange = 1
+		# 		if((int(self.spinbox_UpperRateLimit.get()) in self.upperRateLimitRange) == 0):
+		# 			inRange = 1
+		# 		try:
+		# 			if((float(self.spinbox_atrPulseAmpReg.get()) in self.avPulseAmpRegRange) == 0):
+		# 				inRange = 1
+		# 		except:
+		# 			try:
+		# 				if((self.spinbox_atrPulseAmpReg.get() in self.avPulseAmpRegRange) == 0):
+		# 					inRange = 1
+		# 			except:
+		# 				inRange = 1
+		# 		if((float(self.spinbox_atrPulseWidth.get()) in self.avPulseWidthRange) == 0):
+		# 			inRange = 1
+		# 	elif(self.mode==1):
+		# 		if((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange) == 0):
+		# 			inRange = 1
+		# 		if((int(self.spinbox_UpperRateLimit.get()) in self.upperRateLimitRange) == 0):
+		# 			inRange = 1
+		# 		try:
+		# 			if((float(self.spinbox_ventPulseAmpReg.get()) in self.avPulseAmpRegRange) == 0):
+		# 				inRange = 1
+		# 		except:
+		# 			try:
+		# 				if((self.spinbox_ventPulseAmpReg.get() in self.avPulseAmpRegRange) == 0):
+		# 					inRange = 1
+		# 			except:
+		# 				inRange = 1
+		# 		if((float(self.spinbox_ventPulseWidth.get()) in self.avPulseWidthRange) == 0):
+		# 			inRange = 1
+		# 	elif(self.mode==2):
+		# 		if((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange) == 0):
+		# 			inRange = 1
+		# 		if((int(self.spinbox_UpperRateLimit.get()) in self.upperRateLimitRange) == 0):
+		# 			inRange = 1
+		# 		try:
+		# 			if((float(self.spinbox_atrPulseAmpReg.get()) in self.avPulseAmpRegRange) == 0):
+		# 				inRange = 1
+		# 		except:
+		# 			try:
+		# 				if((self.spinbox_atrPulseAmpReg.get() in self.avPulseAmpRegRange) == 0):
+		# 					inRange = 1
+		# 			except:
+		# 				inRange = 1
+		# 		if((float(self.spinbox_atrPulseWidth.get()) in self.avPulseWidthRange) == 0):
+		# 			inRange = 1
+		# 		if((int(self.spinbox_ARP.get()) in self.ARPRange) == 0):
+		# 			inRange = 1
+		# 	elif(self.mode==3):
+		# 		if((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange) == 0):
+		# 			inRange = 1
+		# 		if((int(self.spinbox_UpperRateLimit.get()) in self.upperRateLimitRange) == 0):
+		# 			inRange = 1
+		# 		try:
+		# 			if((float(self.spinbox_ventPulseAmpReg.get()) in self.avPulseAmpRegRange) == 0):
+		# 				inRange = 1
+		# 		except:
+		# 			try:
+		# 				if((self.spinbox_ventPulseAmpReg.get() in self.avPulseAmpRegRange) == 0):
+		# 					inRange = 1
+		# 			except:
+		# 				inRange = 1
+		# 		if((float(self.spinbox_ventPulseWidth.get()) in self.avPulseWidthRange) == 0):
+		# 			inRange = 1
+		# 		if((int(self.spinbox_VRP.get()) in self.VRPRange) == 0):
+		# 			inRange = 1
+		# except:
+		# 	inRange = 1
+
 	def __mode_Enum(self):
+		if(self.mode == "Off"):
+			return -1
 		if(self.mode == "AAT"):
 			return 0
 		if(self.mode == "VVT"):
@@ -209,132 +373,8 @@ class Welcome():
 		if(self.mode == "DDDR"):
 			return 17
 
-	def __check_In_Range(self): # Checks if the current data stored in the spinboxes is valid. NOTE: Checks spinboxes and NOT self.progParam as we don't want to potentially overwrite good data with bad data
-		inRange = 0 # 0 = in range; anything else = out of range
-
-		# Example code if we use a code to represent each mode
-		# We could use a dictionary to map modes to their code
-		# inRange = 0
-		# for i in numParams:
-		# 	if(!((code[i]==1)&&(self.spinboxParams[i].get() in paramRanges[i]))): #paramRanges is an array that contains the range of every parameter #spinboxParams is an array of spinbox widgets #by extension, we could have an array of label widgets
-		# 		inRange += 1
-
-		# print(int(self.spinbox_LowerRateLimit.get()))
-		# print(self.lowerRateLimitRange)
-		# print((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange))
-
-		try:
-			if(self.mode==0):
-				if((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange) == 0):
-					inRange = 1
-				if((int(self.spinbox_UpperRateLimit.get()) in self.upperRateLimitRange) == 0):
-					inRange = 1
-				try:
-					if((float(self.spinbox_atrPulseAmpReg.get()) in self.avPulseAmpRegRange) == 0):
-						inRange = 1
-				except:
-					try:
-						if((self.spinbox_atrPulseAmpReg.get() in self.avPulseAmpRegRange) == 0):
-							inRange = 1
-					except:
-						inRange = 1
-				if((float(self.spinbox_atrPulseWidth.get()) in self.avPulseWidthRange) == 0):
-					inRange = 1
-			elif(self.mode==1):
-				if((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange) == 0):
-					inRange = 1
-				if((int(self.spinbox_UpperRateLimit.get()) in self.upperRateLimitRange) == 0):
-					inRange = 1
-				try:
-					if((float(self.spinbox_ventPulseAmpReg.get()) in self.avPulseAmpRegRange) == 0):
-						inRange = 1
-				except:
-					try:
-						if((self.spinbox_ventPulseAmpReg.get() in self.avPulseAmpRegRange) == 0):
-							inRange = 1
-					except:
-						inRange = 1
-				if((float(self.spinbox_ventPulseWidth.get()) in self.avPulseWidthRange) == 0):
-					inRange = 1
-			elif(self.mode==2):
-				if((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange) == 0):
-					inRange = 1
-				if((int(self.spinbox_UpperRateLimit.get()) in self.upperRateLimitRange) == 0):
-					inRange = 1
-				try:
-					if((float(self.spinbox_atrPulseAmpReg.get()) in self.avPulseAmpRegRange) == 0):
-						inRange = 1
-				except:
-					try:
-						if((self.spinbox_atrPulseAmpReg.get() in self.avPulseAmpRegRange) == 0):
-							inRange = 1
-					except:
-						inRange = 1
-				if((float(self.spinbox_atrPulseWidth.get()) in self.avPulseWidthRange) == 0):
-					inRange = 1
-				if((int(self.spinbox_ARP.get()) in self.ARPRange) == 0):
-					inRange = 1
-			elif(self.mode==3):
-				if((int(self.spinbox_LowerRateLimit.get()) in self.lowerRateLimitRange) == 0):
-					inRange = 1
-				if((int(self.spinbox_UpperRateLimit.get()) in self.upperRateLimitRange) == 0):
-					inRange = 1
-				try:
-					if((float(self.spinbox_ventPulseAmpReg.get()) in self.avPulseAmpRegRange) == 0):
-						inRange = 1
-				except:
-					try:
-						if((self.spinbox_ventPulseAmpReg.get() in self.avPulseAmpRegRange) == 0):
-							inRange = 1
-					except:
-						inRange = 1
-				if((float(self.spinbox_ventPulseWidth.get()) in self.avPulseWidthRange) == 0):
-					inRange = 1
-				if((int(self.spinbox_VRP.get()) in self.VRPRange) == 0):
-					inRange = 1
-		except:
-			inRange = 1
-
-		return inRange
-
-	def __get_Vals(self): # Saves relevant spinbox data into self.progParam depending on what pacing mode the user is editing
-
-		# Example code if we use a code to represent each mode
-		# We could use a dictionary to map modes to their code
-		# for i in numParams:
-		# 	if(code[i]==1)
-		# 		self.progParam[mode][i]=spinboxParams[i].get()
-
-		if(self.mode==0):
-			self.progParam[0][0]=self.spinbox_LowerRateLimit.get()
-			self.progParam[0][1]=self.spinbox_UpperRateLimit.get()
-			self.progParam[0][2]=self.spinbox_atrPulseAmpReg.get()
-			self.progParam[0][3]=self.spinbox_atrPulseWidth.get()
-			# print(self.progParam[0])
-		elif(self.mode==1):
-			self.progParam[1][0]=self.spinbox_LowerRateLimit.get()
-			self.progParam[1][1]=self.spinbox_UpperRateLimit.get()
-			self.progParam[1][2]=self.spinbox_ventPulseAmpReg.get()
-			self.progParam[1][3]=self.spinbox_ventPulseWidth.get()
-			# print(self.progParam[1])
-		elif(self.mode==2):
-			self.progParam[2][0]=self.spinbox_LowerRateLimit.get()
-			self.progParam[2][1]=self.spinbox_UpperRateLimit.get()
-			self.progParam[2][2]=self.spinbox_atrPulseAmpReg.get()
-			self.progParam[2][3]=self.spinbox_atrPulseWidth.get()
-			self.progParam[2][4]=self.spinbox_ARP.get()
-			# print(self.progParam[2])
-		elif(self.mode==3):
-			self.progParam[3][0]=self.spinbox_LowerRateLimit.get()
-			self.progParam[3][1]=self.spinbox_UpperRateLimit.get()
-			self.progParam[3][2]=self.spinbox_ventPulseAmpReg.get()
-			self.progParam[3][3]=self.spinbox_ventPulseWidth.get()
-			self.progParam[3][4]=self.spinbox_VRP.get()
-			# print(self.progParam[3])
-
 	def __edit_MODE(self,mode): # Displays the correct labels, spinboxes, and activates/deactivates the save/reset buttons
 		self.mode = mode
-		print(self.mode)
 
 		index = 0
 
@@ -362,227 +402,47 @@ class Welcome():
 				self.spinboxParams[index].insert(0,self.progParam[self.__mode_Enum()][index])
 			index+=1
 
-	# def __edit_NONE(self): # Displays the correct labels & spinboxes, and activates/deactivates the save/reset to nominal buttons depending on the mode. The next functions are similar
+		if(self.__mode_Enum() == -1):
+			self.but_Save.config(state=DISABLED)
+			self.but_Reset.config(state=DISABLED)
+		else:
+			self.but_Save.config(state=NORMAL)
+			self.but_Reset.config(state=NORMAL)
 
-	# 	# Example code if we use a code to represent each mode
-	# 	# We could use a dictionary to map modes to their code
-	# 	# Need to modify each button's command= to send edit_Mode(mode)
-	# 	# That way we can lookup mode in the dictionary to get the corresponding string code
-	# 	# self.mode = mode
-	# 	# for thing in modeDict[self.mode]:
-	# 	# 	if(thing):
-	# 	# 		self.labelParams[i].pack(side=TOP,fill=X,expand=False)
-	# 	# 		self.spinboxParams[i].pack(side=TOP,fill=X,expand=False)
-	# 	# 	else:
-	# 	# 		self.labelParams[i].pack_forget()
-	# 	# 		self.spinboxParams[i].pack_forget()
-
-	# 	self.mode = -1
-
-	# 	self.progParamFrameItemsL.config(background='snow')
-	# 	self.progParamFrameItemsR.config(background='snow')
-
-	# 	self.label_LowerRateLimit.pack_forget()
-	# 	self.label_UpperRateLimit.pack_forget()
-	# 	self.label_atrPulseAmpReg.pack_forget()
-	# 	self.label_ventPulseAmpReg.pack_forget()
-	# 	self.label_atrPulseWidth.pack_forget()
-	# 	self.label_ventPulseWidth.pack_forget()
-	# 	self.label_ARP.pack_forget()
-	# 	self.label_VRP.pack_forget()
-
-	# 	self.spinbox_LowerRateLimit.pack_forget()
-	# 	self.spinbox_UpperRateLimit.pack_forget()
-	# 	self.spinbox_atrPulseAmpReg.pack_forget()
-	# 	self.spinbox_ventPulseAmpReg.pack_forget()
-	# 	self.spinbox_atrPulseWidth.pack_forget()
-	# 	self.spinbox_ventPulseWidth.pack_forget()
-	# 	self.spinbox_ARP.pack_forget()
-	# 	self.spinbox_VRP.pack_forget()
-
-	# 	self.but_Off.config(relief='sunken')
-	# 	self.but_AOO.config(relief='raised')
-	# 	self.but_VOO.config(relief='raised')
-	# 	self.but_AAI.config(relief='raised')
-	# 	self.but_VVI.config(relief='raised')
-	# 	self.but_Save.config(state=DISABLED)
-	# 	self.but_Reset.config(state=DISABLED)
-
-	# def __edit_AOO(self):
-	# 	self.mode = 0
-
-	# 	self.progParamFrameItemsL.config(background='snow')
-	# 	self.progParamFrameItemsR.config(background='snow')
-
-	# 	self.label_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_atrPulseAmpReg.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_ventPulseAmpReg.pack_forget()
-	# 	self.label_atrPulseWidth.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_ventPulseWidth.pack_forget()
-	# 	self.label_ARP.pack_forget()
-	# 	self.label_VRP.pack_forget()
-
-	# 	self.spinbox_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_atrPulseAmpReg.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_ventPulseAmpReg.pack_forget()
-	# 	self.spinbox_atrPulseWidth.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_ventPulseWidth.pack_forget()
-	# 	self.spinbox_ARP.pack_forget()
-	# 	self.spinbox_VRP.pack_forget()
-
-	# 	# print(self.mode)
-	# 	self.spinbox_LowerRateLimit.delete(0,"end")
-	# 	self.spinbox_LowerRateLimit.insert(0,self.progParam[self.mode][0])
-	# 	self.spinbox_UpperRateLimit.delete(0,"end")
-	# 	self.spinbox_UpperRateLimit.insert(0,self.progParam[self.mode][1])
-	# 	self.spinbox_atrPulseAmpReg.delete(0,"end")
-	# 	self.spinbox_atrPulseAmpReg.insert(0,self.progParam[self.mode][2])
-	# 	self.spinbox_atrPulseWidth.delete(0,"end")
-	# 	self.spinbox_atrPulseWidth.insert(0,self.progParam[self.mode][3])
-
-	# 	self.but_Off.config(relief='raised')
-	# 	self.but_AOO.config(relief='sunken')
-	# 	self.but_VOO.config(relief='raised')
-	# 	self.but_AAI.config(relief='raised')
-	# 	self.but_VVI.config(relief='raised')
-	# 	self.but_Save.config(state=DISABLED)
-	# 	self.but_Save.config(state=NORMAL)
-	# 	self.but_Reset.config(state=NORMAL)
-
-	# def __edit_VOO(self):
-	# 	self.mode = 1
-
-	# 	self.progParamFrameItemsL.config(background='snow')
-	# 	self.progParamFrameItemsR.config(background='snow')
-
-	# 	self.label_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_atrPulseAmpReg.pack_forget()
-	# 	self.label_ventPulseAmpReg.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_atrPulseWidth.pack_forget()
-	# 	self.label_ventPulseWidth.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_ARP.pack_forget()
-	# 	self.label_VRP.pack_forget()
-
-	# 	self.spinbox_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_atrPulseAmpReg.pack_forget()
-	# 	self.spinbox_ventPulseAmpReg.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_atrPulseWidth.pack_forget()
-	# 	self.spinbox_ventPulseWidth.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_ARP.pack_forget()
-	# 	self.spinbox_VRP.pack_forget()
-
-	# 	# print(self.mode)
-	# 	self.spinbox_LowerRateLimit.delete(0,"end")
-	# 	self.spinbox_LowerRateLimit.insert(0,self.progParam[self.mode][0])
-	# 	self.spinbox_UpperRateLimit.delete(0,"end")
-	# 	self.spinbox_UpperRateLimit.insert(0,self.progParam[self.mode][1])
-	# 	self.spinbox_ventPulseAmpReg.delete(0,"end")
-	# 	self.spinbox_ventPulseAmpReg.insert(0,self.progParam[self.mode][2])
-	# 	self.spinbox_ventPulseWidth.delete(0,"end")
-	# 	self.spinbox_ventPulseWidth.insert(0,self.progParam[self.mode][3])
-
-	# 	self.but_Off.config(relief='raised')
-	# 	self.but_AOO.config(relief='raised')
-	# 	self.but_VOO.config(relief='sunken')
-	# 	self.but_AAI.config(relief='raised')
-	# 	self.but_VVI.config(relief='raised')
-	# 	self.but_Save.config(state=DISABLED)
-	# 	self.but_Save.config(state=NORMAL)
-	# 	self.but_Reset.config(state=NORMAL)
-
-	# def __edit_AAI(self):
-	# 	self.mode = 2
-
-	# 	self.progParamFrameItemsL.config(background='snow')
-	# 	self.progParamFrameItemsR.config(background='snow')
+		self.but_Off.config(relief='raised')
+		self.but_AOO.config(relief='raised')
+		self.but_VOO.config(relief='raised')
+		self.but_AAI.config(relief='raised')
+		self.but_VVI.config(relief='raised')
+		self.but_DOO.config(relief='raised')
+		self.but_AOOR.config(relief='raised')
+		self.but_AAIR.config(relief='raised')
+		self.but_VOOR.config(relief='raised')
+		self.but_VVIR.config(relief='raised')
+		self.but_DOOR.config(relief='raised')
 		
-	# 	self.label_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_atrPulseAmpReg.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_ventPulseAmpReg.pack_forget()
-	# 	self.label_atrPulseWidth.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_ventPulseWidth.pack_forget()
-	# 	self.label_ARP.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_VRP.pack_forget()
-
-	# 	self.spinbox_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_atrPulseAmpReg.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_ventPulseAmpReg.pack_forget()
-	# 	self.spinbox_atrPulseWidth.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_ventPulseWidth.pack_forget()
-	# 	self.spinbox_ARP.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_VRP.pack_forget()
-
-	# 	# print(self.mode)
-	# 	self.spinbox_LowerRateLimit.delete(0,"end")
-	# 	self.spinbox_LowerRateLimit.insert(0,self.progParam[self.mode][0])
-	# 	self.spinbox_UpperRateLimit.delete(0,"end")
-	# 	self.spinbox_UpperRateLimit.insert(0,self.progParam[self.mode][1])
-	# 	self.spinbox_atrPulseAmpReg.delete(0,"end")
-	# 	self.spinbox_atrPulseAmpReg.insert(0,self.progParam[self.mode][2])
-	# 	self.spinbox_atrPulseWidth.delete(0,"end")
-	# 	self.spinbox_atrPulseWidth.insert(0,self.progParam[self.mode][3])
-	# 	self.spinbox_ARP.delete(0,"end")
-	# 	self.spinbox_ARP.insert(0,self.progParam[self.mode][4])
-
-	# 	self.but_Off.config(relief='raised')
-	# 	self.but_AOO.config(relief='raised')
-	# 	self.but_VOO.config(relief='raised')
-	# 	self.but_AAI.config(relief='sunken')
-	# 	self.but_VVI.config(relief='raised')
-	# 	self.but_Save.config(state=DISABLED)
-	# 	self.but_Save.config(state=NORMAL)
-	# 	self.but_Reset.config(state=NORMAL)
-
-	# def __edit_VVI(self):
-	# 	self.mode = 3
-		
-	# 	self.progParamFrameItemsL.config(background='snow')
-	# 	self.progParamFrameItemsR.config(background='snow')
-
-	# 	self.label_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_atrPulseAmpReg.pack_forget()
-	# 	self.label_ventPulseAmpReg.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_atrPulseWidth.pack_forget()
-	# 	self.label_ventPulseWidth.pack(side=TOP,fill=X,expand=False)
-	# 	self.label_ARP.pack_forget()
-	# 	self.label_VRP.pack(side=TOP,fill=X,expand=False)
-
-	# 	self.spinbox_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_atrPulseAmpReg.pack_forget()
-	# 	self.spinbox_ventPulseAmpReg.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_atrPulseWidth.pack_forget()
-	# 	self.spinbox_ventPulseWidth.pack(side=TOP,fill=X,expand=False)
-	# 	self.spinbox_ARP.pack_forget()
-	# 	self.spinbox_VRP.pack(side=TOP,fill=X,expand=False)
-
-	# 	# print(self.mode)
-	# 	self.spinbox_LowerRateLimit.delete(0,"end")
-	# 	self.spinbox_LowerRateLimit.insert(0,self.progParam[self.mode][0])
-	# 	self.spinbox_UpperRateLimit.delete(0,"end")
-	# 	self.spinbox_UpperRateLimit.insert(0,self.progParam[self.mode][1])
-	# 	self.spinbox_ventPulseAmpReg.delete(0,"end")
-	# 	self.spinbox_ventPulseAmpReg.insert(0,self.progParam[self.mode][2])
-	# 	self.spinbox_ventPulseWidth.delete(0,"end")
-	# 	self.spinbox_ventPulseWidth.insert(0,self.progParam[self.mode][3])
-	# 	self.spinbox_VRP.delete(0,"end")
-	# 	self.spinbox_VRP.insert(0,self.progParam[self.mode][4])
-
-	# 	self.but_Off.config(relief='raised')
-	# 	self.but_AOO.config(relief='raised')
-	# 	self.but_VOO.config(relief='raised')
-	# 	self.but_AAI.config(relief='raised')
-	# 	self.but_VVI.config(relief='sunken')
-	# 	self.but_Save.config(state=DISABLED)
-	# 	self.but_Save.config(state=NORMAL)
-	# 	self.but_Reset.config(state=NORMAL)
+		if(self.__mode_Enum() == -1):
+			self.but_Off.config(relief='sunken')
+		elif(self.__mode_Enum() == 2):
+			self.but_AOO.config(relief='sunken')
+		elif(self.__mode_Enum() == 3):
+			self.but_AAI.config(relief='sunken')
+		elif(self.__mode_Enum() == 4):
+			self.but_VOO.config(relief='sunken')
+		elif(self.__mode_Enum() == 5):
+			self.but_VVI.config(relief='sunken')
+		elif(self.__mode_Enum() == 7):
+			self.but_DOO.config(relief='sunken')
+		elif(self.__mode_Enum() == 10):
+			self.but_AOOR.config(relief='sunken')
+		elif(self.__mode_Enum() == 11):
+			self.but_AAIR.config(relief='sunken')
+		elif(self.__mode_Enum() == 12):
+			self.but_VOOR.config(relief='sunken')
+		elif(self.__mode_Enum() == 13):
+			self.but_VVIR.config(relief='sunken')
+		elif(self.__mode_Enum() == 15):
+			self.but_DOOR.config(relief='sunken')
 
 	def __create_Welcome_Window(self): # Creates the main GUI using .pack()
 		self.root.title("DCM")
@@ -714,7 +574,7 @@ class Welcome():
 		self.spinboxParams[15] = Spinbox(self.progParamFrameItemsR,values=self.VRPRange,bd=self.spinboxBD)
 		
 		self.spinboxParams[16] = Spinbox(self.progParamFrameItemsR,values=self.ARPRange,bd=self.spinboxBD)
-		self.spinboxParams[17]  = Spinbox(self.progParamFrameItemsR,values=self.pvarpRange,bd=self.spinboxBD)
+		self.spinboxParams[17] = Spinbox(self.progParamFrameItemsR,values=self.pvarpRange,bd=self.spinboxBD)
 		self.spinboxParams[18] = Spinbox(self.progParamFrameItemsR,values=self.pvarpExtensionRange,bd=self.spinboxBD)
 		self.spinboxParams[19] = Spinbox(self.progParamFrameItemsR,values=self.hysRange,bd=self.spinboxBD)
 		
@@ -731,3 +591,222 @@ class Welcome():
 		self.spinboxParams[28] = Spinbox(self.progParamFrameItemsR,values=self.reactionTimeRange,bd=self.spinboxBD)
 		self.spinboxParams[29] = Spinbox(self.progParamFrameItemsR,values=self.responseFactorRange,bd=self.spinboxBD)
 		self.spinboxParams[30] = Spinbox(self.progParamFrameItemsR,values=self.recoveryTimeRange,bd=self.spinboxBD)
+
+
+	# def __edit_NONE(self): # Displays the correct labels & spinboxes, and activates/deactivates the save/reset to nominal buttons depending on the mode. The next functions are similar
+
+	# 	# Example code if we use a code to represent each mode
+	# 	# We could use a dictionary to map modes to their code
+	# 	# Need to modify each button's command= to send edit_Mode(mode)
+	# 	# That way we can lookup mode in the dictionary to get the corresponding string code
+	# 	# self.mode = mode
+	# 	# for thing in modeDict[self.mode]:
+	# 	# 	if(thing):
+	# 	# 		self.labelParams[i].pack(side=TOP,fill=X,expand=False)
+	# 	# 		self.spinboxParams[i].pack(side=TOP,fill=X,expand=False)
+	# 	# 	else:
+	# 	# 		self.labelParams[i].pack_forget()
+	# 	# 		self.spinboxParams[i].pack_forget()
+
+	# 	self.mode = -1
+
+	# 	self.progParamFrameItemsL.config(background='snow')
+	# 	self.progParamFrameItemsR.config(background='snow')
+
+	# 	self.label_LowerRateLimit.pack_forget()
+	# 	self.label_UpperRateLimit.pack_forget()
+	# 	self.label_atrPulseAmpReg.pack_forget()
+	# 	self.label_ventPulseAmpReg.pack_forget()
+	# 	self.label_atrPulseWidth.pack_forget()
+	# 	self.label_ventPulseWidth.pack_forget()
+	# 	self.label_ARP.pack_forget()
+	# 	self.label_VRP.pack_forget()
+
+	# 	self.spinbox_LowerRateLimit.pack_forget()
+	# 	self.spinbox_UpperRateLimit.pack_forget()
+	# 	self.spinbox_atrPulseAmpReg.pack_forget()
+	# 	self.spinbox_ventPulseAmpReg.pack_forget()
+	# 	self.spinbox_atrPulseWidth.pack_forget()
+	# 	self.spinbox_ventPulseWidth.pack_forget()
+	# 	self.spinbox_ARP.pack_forget()
+	# 	self.spinbox_VRP.pack_forget()
+
+	# 	self.but_Off.config(relief='sunken')
+	# 	self.but_AOO.config(relief='raised')
+	# 	self.but_VOO.config(relief='raised')
+	# 	self.but_AAI.config(relief='raised')
+	# 	self.but_VVI.config(relief='raised')
+	# 	self.but_Save.config(state=DISABLED)
+	# 	self.but_Reset.config(state=DISABLED)
+
+	# def __edit_AOO(self):
+	# 	self.mode = 0
+
+	# 	self.progParamFrameItemsL.config(background='snow')
+	# 	self.progParamFrameItemsR.config(background='snow')
+
+	# 	self.label_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_atrPulseAmpReg.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_ventPulseAmpReg.pack_forget()
+	# 	self.label_atrPulseWidth.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_ventPulseWidth.pack_forget()
+	# 	self.label_ARP.pack_forget()
+	# 	self.label_VRP.pack_forget()
+
+	# 	self.spinbox_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_atrPulseAmpReg.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_ventPulseAmpReg.pack_forget()
+	# 	self.spinbox_atrPulseWidth.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_ventPulseWidth.pack_forget()
+	# 	self.spinbox_ARP.pack_forget()
+	# 	self.spinbox_VRP.pack_forget()
+
+	# 	# print(self.mode)
+	# 	self.spinbox_LowerRateLimit.delete(0,"end")
+	# 	self.spinbox_LowerRateLimit.insert(0,self.progParam[self.mode][0])
+	# 	self.spinbox_UpperRateLimit.delete(0,"end")
+	# 	self.spinbox_UpperRateLimit.insert(0,self.progParam[self.mode][1])
+	# 	self.spinbox_atrPulseAmpReg.delete(0,"end")
+	# 	self.spinbox_atrPulseAmpReg.insert(0,self.progParam[self.mode][2])
+	# 	self.spinbox_atrPulseWidth.delete(0,"end")
+	# 	self.spinbox_atrPulseWidth.insert(0,self.progParam[self.mode][3])
+
+	# 	self.but_Off.config(relief='raised')
+	# 	self.but_AOO.config(relief='sunken')
+	# 	self.but_VOO.config(relief='raised')
+	# 	self.but_AAI.config(relief='raised')
+	# 	self.but_VVI.config(relief='raised')
+	# 	self.but_Save.config(state=NORMAL)
+	# 	self.but_Reset.config(state=NORMAL)
+
+	# def __edit_VOO(self):
+	# 	self.mode = 1
+
+	# 	self.progParamFrameItemsL.config(background='snow')
+	# 	self.progParamFrameItemsR.config(background='snow')
+
+	# 	self.label_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_atrPulseAmpReg.pack_forget()
+	# 	self.label_ventPulseAmpReg.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_atrPulseWidth.pack_forget()
+	# 	self.label_ventPulseWidth.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_ARP.pack_forget()
+	# 	self.label_VRP.pack_forget()
+
+	# 	self.spinbox_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_atrPulseAmpReg.pack_forget()
+	# 	self.spinbox_ventPulseAmpReg.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_atrPulseWidth.pack_forget()
+	# 	self.spinbox_ventPulseWidth.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_ARP.pack_forget()
+	# 	self.spinbox_VRP.pack_forget()
+
+	# 	# print(self.mode)
+	# 	self.spinbox_LowerRateLimit.delete(0,"end")
+	# 	self.spinbox_LowerRateLimit.insert(0,self.progParam[self.mode][0])
+	# 	self.spinbox_UpperRateLimit.delete(0,"end")
+	# 	self.spinbox_UpperRateLimit.insert(0,self.progParam[self.mode][1])
+	# 	self.spinbox_ventPulseAmpReg.delete(0,"end")
+	# 	self.spinbox_ventPulseAmpReg.insert(0,self.progParam[self.mode][2])
+	# 	self.spinbox_ventPulseWidth.delete(0,"end")
+	# 	self.spinbox_ventPulseWidth.insert(0,self.progParam[self.mode][3])
+
+	# 	self.but_Off.config(relief='raised')
+	# 	self.but_AOO.config(relief='raised')
+	# 	self.but_VOO.config(relief='sunken')
+	# 	self.but_AAI.config(relief='raised')
+	# 	self.but_VVI.config(relief='raised')
+	# 	self.but_Save.config(state=NORMAL)
+	# 	self.but_Reset.config(state=NORMAL)
+
+	# def __edit_AAI(self):
+	# 	self.mode = 2
+
+	# 	self.progParamFrameItemsL.config(background='snow')
+	# 	self.progParamFrameItemsR.config(background='snow')
+		
+	# 	self.label_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_atrPulseAmpReg.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_ventPulseAmpReg.pack_forget()
+	# 	self.label_atrPulseWidth.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_ventPulseWidth.pack_forget()
+	# 	self.label_ARP.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_VRP.pack_forget()
+
+	# 	self.spinbox_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_atrPulseAmpReg.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_ventPulseAmpReg.pack_forget()
+	# 	self.spinbox_atrPulseWidth.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_ventPulseWidth.pack_forget()
+	# 	self.spinbox_ARP.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_VRP.pack_forget()
+
+	# 	# print(self.mode)
+	# 	self.spinbox_LowerRateLimit.delete(0,"end")
+	# 	self.spinbox_LowerRateLimit.insert(0,self.progParam[self.mode][0])
+	# 	self.spinbox_UpperRateLimit.delete(0,"end")
+	# 	self.spinbox_UpperRateLimit.insert(0,self.progParam[self.mode][1])
+	# 	self.spinbox_atrPulseAmpReg.delete(0,"end")
+	# 	self.spinbox_atrPulseAmpReg.insert(0,self.progParam[self.mode][2])
+	# 	self.spinbox_atrPulseWidth.delete(0,"end")
+	# 	self.spinbox_atrPulseWidth.insert(0,self.progParam[self.mode][3])
+	# 	self.spinbox_ARP.delete(0,"end")
+	# 	self.spinbox_ARP.insert(0,self.progParam[self.mode][4])
+
+	# 	self.but_Off.config(relief='raised')
+	# 	self.but_AOO.config(relief='raised')
+	# 	self.but_VOO.config(relief='raised')
+	# 	self.but_AAI.config(relief='sunken')
+	# 	self.but_VVI.config(relief='raised')
+	# 	self.but_Save.config(state=NORMAL)
+	# 	self.but_Reset.config(state=NORMAL)
+
+	# def __edit_VVI(self):
+	# 	self.mode = 3
+		
+	# 	self.progParamFrameItemsL.config(background='snow')
+	# 	self.progParamFrameItemsR.config(background='snow')
+
+	# 	self.label_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_atrPulseAmpReg.pack_forget()
+	# 	self.label_ventPulseAmpReg.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_atrPulseWidth.pack_forget()
+	# 	self.label_ventPulseWidth.pack(side=TOP,fill=X,expand=False)
+	# 	self.label_ARP.pack_forget()
+	# 	self.label_VRP.pack(side=TOP,fill=X,expand=False)
+
+	# 	self.spinbox_LowerRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_UpperRateLimit.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_atrPulseAmpReg.pack_forget()
+	# 	self.spinbox_ventPulseAmpReg.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_atrPulseWidth.pack_forget()
+	# 	self.spinbox_ventPulseWidth.pack(side=TOP,fill=X,expand=False)
+	# 	self.spinbox_ARP.pack_forget()
+	# 	self.spinbox_VRP.pack(side=TOP,fill=X,expand=False)
+
+	# 	print(self.mode)
+	# 	self.spinbox_LowerRateLimit.delete(0,"end")
+	# 	self.spinbox_LowerRateLimit.insert(0,self.progParam[self.mode][0])
+	# 	self.spinbox_UpperRateLimit.delete(0,"end")
+	# 	self.spinbox_UpperRateLimit.insert(0,self.progParam[self.mode][1])
+	# 	self.spinbox_ventPulseAmpReg.delete(0,"end")
+	# 	self.spinbox_ventPulseAmpReg.insert(0,self.progParam[self.mode][2])
+	# 	self.spinbox_ventPulseWidth.delete(0,"end")
+	# 	self.spinbox_ventPulseWidth.insert(0,self.progParam[self.mode][3])
+	# 	self.spinbox_VRP.delete(0,"end")
+	# 	self.spinbox_VRP.insert(0,self.progParam[self.mode][4])
+
+	# 	self.but_Off.config(relief='raised')
+	# 	self.but_AOO.config(relief='raised')
+	# 	self.but_VOO.config(relief='raised')
+	# 	self.but_AAI.config(relief='raised')
+	# 	self.but_VVI.config(relief='sunken')
+	# 	self.but_Save.config(state=NORMAL)
+	# 	self.but_Reset.config(state=NORMAL)
