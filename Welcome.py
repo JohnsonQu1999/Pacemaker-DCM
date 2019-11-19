@@ -11,20 +11,23 @@
 #  - Visually indicates when the DCM and device are communicating
 #  - Visually indicates when a different pacemaker device is approached than was previously interrogated
 
-#===TODO===#
+#===COMPLETED TODO ITEMS==#
 # IDEA: for the edit_XXXX's, instead of making a dedicated method for each mode,
   # Make one that takes care of all of them, and input a string of 1's and 0's which marks which entries
   # we care about, as is page 28 of the PACEMAKER document
   # Issues: how do we determine mode? maybe check against a dictionary
   # PREREQ's: 1.) modify data storage string format (needs to include all 25 options for each mode,
-  # with NA's anywhere it's not applicable)
-  # 2.) edit check_In_Range - PSEUDO CODE WRITTEN
-  # 3.) edit get_Vals - PSEUDO CODE WRITTEN
-  # 4.) replace edit_XXX's with 1 function - PSEUDO CODE WRITTEN
-  # 5.) add all buttons in create_Welcome_Window
-  # This method would be called 'refreshGUI'
+  # with NA's anywhere it's not applicable)										COMPLETED
+  # 2.) edit __check_In_Range - PSEUDO CODE WRITTEN								COMPLETED
+  # 3.) edit __get_Vals - PSEUDO CODE WRITTEN									COMPLETED
+  # 4.) replace edit_XXX's with 1 function - PSEUDO CODE WRITTEN				COMPLETED
+  # 5.) add all buttons in __create_Welcome_Window								COMPLETED
+
+#===TODO===#
 # Create 'update' method to update screen when values change
+  # This method would be called 'refreshScreen'
 # Create more descriptive error messages
+  # Having some issues in __check_In_Range function. Come back to this.
 # Serial comms b/w DCM and board
   # Transmit parameter and mode data
   # Conduct error checking
@@ -152,14 +155,15 @@ class Welcome():
 	def __set_Default_Values(self): # Sets default nominal values for one mode by using the rw class
 		self.__get_Default_Values(self.mode)
 		self.__set_User_Data()
-		if(self.mode==0):
-			self.__edit_AOO()  # calling self_editAOO() is a workaround for updating spinbox values after writing them. 
-		elif(self.mode==1):    # Should replace with a single 'update' method that updates the GUI screen depending on the mode we're in
-			self.__edit_VOO()
-		elif(self.mode==2):
-			self.__edit_AAI()
-		elif(self.mode==3):
-			self.__edit_VVI()
+		self.__refresh_Screen()
+		# if(self.mode==0):
+		# 	self.__edit_AOO()  # calling self_editAOO() is a workaround for updating spinbox values after writing them. 
+		# elif(self.mode==1):    # Should replace with a single 'update' method that updates the GUI screen depending on the mode we're in
+		# 	self.__edit_VOO()
+		# elif(self.mode==2):
+		# 	self.__edit_AAI()
+		# elif(self.mode==3):
+		# 	self.__edit_VVI()
 	
 	def __save_Param(self): # Saves the data currently in spinboxes by reading all data, checking if its in range then finally calling the __set_User_Data() function 
 		if(self.__check_In_Range()==0): # If the data is bad, it displays an error and reset the spinboxes to what they were at before
@@ -167,14 +171,10 @@ class Welcome():
 			self.__set_User_Data()
 		else:
 			messagebox.showerror("Error","Data out of range!")
-			if(self.mode==0):
-				self.__edit_AOO()
-			elif(self.mode==1):
-				self.__edit_VOO()
-			elif(self.mode==2):
-				self.__edit_AAI()
-			elif(self.mode==3):
-				self.__edit_VVI()
+			self.__refresh_Screen()
+
+	def __refresh_Screen(self):
+		self.__edit_MODE(self.mode)
 
 	def __get_Vals(self): # Saves relevant spinbox data into self.progParam depending on what pacing mode the user is editing
 
@@ -184,32 +184,39 @@ class Welcome():
 		# 	if(code[i]==1)
 		# 		self.progParam[mode][i]=spinboxParams[i].get()
 
-		if(self.mode==0):
-			self.progParam[0][0]=self.spinbox_LowerRateLimit.get()
-			self.progParam[0][1]=self.spinbox_UpperRateLimit.get()
-			self.progParam[0][2]=self.spinbox_atrPulseAmpReg.get()
-			self.progParam[0][3]=self.spinbox_atrPulseWidth.get()
-			# print(self.progParam[0])
-		elif(self.mode==1):
-			self.progParam[1][0]=self.spinbox_LowerRateLimit.get()
-			self.progParam[1][1]=self.spinbox_UpperRateLimit.get()
-			self.progParam[1][2]=self.spinbox_ventPulseAmpReg.get()
-			self.progParam[1][3]=self.spinbox_ventPulseWidth.get()
-			# print(self.progParam[1])
-		elif(self.mode==2):
-			self.progParam[2][0]=self.spinbox_LowerRateLimit.get()
-			self.progParam[2][1]=self.spinbox_UpperRateLimit.get()
-			self.progParam[2][2]=self.spinbox_atrPulseAmpReg.get()
-			self.progParam[2][3]=self.spinbox_atrPulseWidth.get()
-			self.progParam[2][4]=self.spinbox_ARP.get()
-			# print(self.progParam[2])
-		elif(self.mode==3):
-			self.progParam[3][0]=self.spinbox_LowerRateLimit.get()
-			self.progParam[3][1]=self.spinbox_UpperRateLimit.get()
-			self.progParam[3][2]=self.spinbox_ventPulseAmpReg.get()
-			self.progParam[3][3]=self.spinbox_ventPulseWidth.get()
-			self.progParam[3][4]=self.spinbox_VRP.get()
-			# print(self.progParam[3])
+		index = 0
+
+		for get in self.modeDict[self.mode]:
+			if(get == '1'):
+				self.progParam[self.__mode_Enum()][index] = self.spinboxParams[index].get()
+			index+=1
+
+		# if(self.mode==0):
+		# 	self.progParam[0][0]=self.spinbox_LowerRateLimit.get()
+		# 	self.progParam[0][1]=self.spinbox_UpperRateLimit.get()
+		# 	self.progParam[0][2]=self.spinbox_atrPulseAmpReg.get()
+		# 	self.progParam[0][3]=self.spinbox_atrPulseWidth.get()
+		# 	# print(self.progParam[0])
+		# elif(self.mode==1):
+		# 	self.progParam[1][0]=self.spinbox_LowerRateLimit.get()
+		# 	self.progParam[1][1]=self.spinbox_UpperRateLimit.get()
+		# 	self.progParam[1][2]=self.spinbox_ventPulseAmpReg.get()
+		# 	self.progParam[1][3]=self.spinbox_ventPulseWidth.get()
+		# 	# print(self.progParam[1])
+		# elif(self.mode==2):
+		# 	self.progParam[2][0]=self.spinbox_LowerRateLimit.get()
+		# 	self.progParam[2][1]=self.spinbox_UpperRateLimit.get()
+		# 	self.progParam[2][2]=self.spinbox_atrPulseAmpReg.get()
+		# 	self.progParam[2][3]=self.spinbox_atrPulseWidth.get()
+		# 	self.progParam[2][4]=self.spinbox_ARP.get()
+		# 	# print(self.progParam[2])
+		# elif(self.mode==3):
+		# 	self.progParam[3][0]=self.spinbox_LowerRateLimit.get()
+		# 	self.progParam[3][1]=self.spinbox_UpperRateLimit.get()
+		# 	self.progParam[3][2]=self.spinbox_ventPulseAmpReg.get()
+		# 	self.progParam[3][3]=self.spinbox_ventPulseWidth.get()
+		# 	self.progParam[3][4]=self.spinbox_VRP.get()
+		# 	# print(self.progParam[3])
 
 	def __check_In_Range(self): # Checks if the current data stored in the spinboxes is valid. NOTE: Checks spinboxes and NOT self.progParam as we don't want to potentially overwrite good data with bad data
 		# return 0 = in range
@@ -233,6 +240,7 @@ class Welcome():
 			if(check == '1'):
 				try:
 					if((int(self.spinboxParams[index].get()) in self.rangesParam[index]) == 0):
+						messagebox.showerror("Data out of Range",self.spinboxParams[index]+" not in "+self.rangesParam[index])
 						# print("failed on index "+str(index)+" in first try")
 						# print(self.spinboxParams[index].get())
 						# print(self.rangesParam[index])
@@ -241,19 +249,22 @@ class Welcome():
 					# print("is not int")
 					try:
 						if((float(self.spinboxParams[index].get()) in self.rangesParam[index]) == 0):
+							messagebox.showerror("Data out of Range",self.spinboxParams[index]+" not in "+self.rangesParam[index])
 							# print("failed on index "+str(index)+" in second try")
 							# print(self.spinboxParams[index].get())
 							# print(self.rangesParam[index])
 							return 1
 					except:
-						print("is not float")
+						# print("is not float")
 						try:
 							if((self.spinboxParams[index].get() in self.rangesParam[index]) == 0):
+								messagebox.showerror("Data out of Range",self.spinboxParams[index]+" not in "+self.rangesParam[index])
 								# print("failed on index "+str(index)+" in third try")
 								# print(self.spinboxParams[index].get())
 								# print(self.rangesParam[index])
 								return 1
 						except:
+							messagebox.showerror("Error","Wrong data type entered!")
 							# print("failed on index "+str(index)+" in except")
 							return 1
 
