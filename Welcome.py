@@ -38,25 +38,25 @@ from rw import*
 class Welcome():
 	def __init__(self,screen): #Constructor, sets up inital values
 		self.modeDict = {
-			"Off":"0000000000000000000000000",
-			"AAT":"1100001010100110000000000", # Not using
-			"VVT":"1100000101011000000000000", # Not using
-			"AOO":"1100001010000000000000000",
-			"AAI":"1100001010100110110000000",
-			"VOO":"1100000101000000000000000",
-			"VVI":"1100000101011000110000000",
-			"VDD":"1101100101011001011110000", # Not using
-			"DOO":"1101001111000000000000000",
-			"DDI":"1101001111111110000000000", # Not using
-			"DDD":"1101111111111111111110000", # Not using
-			"AOOR":"1110001010000000000001111",
-			"AAIR":"1110001010100110110001111",
-			"VOOR":"1110000101000000000001111",
-			"VVIR":"1110000101011000110001111",
-			"VDDR":"1111100101011001011111111", # Not using
-			"DOOR":"1111001111000000000001111",
-			"DDIR":"1111001111111110000001111", # Not using
-			"DDDR":"1111111111111111111111111" # Not using
+			"Off":"000000000000000000000000000000",
+			"AAT":"110000010101010011000000000000", # Not using
+			"VVT":"110000001010101100000000000000", # Not using
+			"AOO":"110000010101000000000000000000",
+			"AAI":"110000010101010011011000000000",
+			"VOO":"110000001010100000000000000000",
+			"VVI":"110000001010101100011000000000",
+			"VDD":"110111001010101100101111110000", # Not using
+			"DOO":"110100011111100000000000000000",
+			"DDI":"110100011111111111000000000000", # Not using
+			"DDD":"110111111111111111111111110000", # Not using
+			"AOOR":"111000010101000000000000001111",
+			"AAIR":"111000010101010011011000001111",
+			"VOOR":"111000001010100000000000001111",
+			"VVIR":"111000001010101100011000001111",
+			"VDDR":"111111001010101100101111111111", # Not using
+			"DOOR":"111100011111100000000000001111",
+			"DDIR":"111100011111111111000000001111", # Not using
+			"DDDR":"111111111111111111111111111111" # Not using
 		}
 		self.mode = "DDD"  # Not using DDD...
 
@@ -91,9 +91,9 @@ class Welcome():
 
 		self.progParam = []
 
-		self.numParams = 28
-		self.labelParams = []
-		self.spinBoxParams = []
+		self.numParams = 31
+		self.labelParams = [None]*self.numParams
+		self.spinboxParams = [None]*self.numParams
 		self.commsStatus = 1 # 0 means good status
 		self.boardStatus = 1 # 0 means good board
 		self.spinboxBD = 2
@@ -104,7 +104,9 @@ class Welcome():
 		self.boardStatusInd.set(self.__get_Board_Status())
 
 		self.__get_User_Data()
-		self.__create_Welcome_Window() #All statements must occur before this as this contains the .mainloop() where it gets trapped for all eternity.
+		self.__create_Welcome_Window()
+
+		self.root.mainloop() #All statements must occur before this line as .mainloop() traps it for all eternity. (.mainloop ~ while(1))
 
 	def __get_Comms_Status(self): # Gets comms status. Currently psuedo code - will call upon an external class in the future
 		if(self.commsStatus==0):
@@ -136,7 +138,7 @@ class Welcome():
 		file.set_ProgParam(self.progParam)
 
 	def __get_Default_Values(self,code): # Gets default nominal values from rw class instead of primary user values. Has the option of reading default for all parameters, or just for 1 mode
-		file=RW()
+		file=RW()						 # if code = -1, set all values to default, if not, only set 1 modes' values to default
 		if(code==-1):
 			self.progParam=file.get_ProgParam(1)
 		else:
@@ -168,6 +170,44 @@ class Welcome():
 				self.__edit_AAI()
 			elif(self.mode==3):
 				self.__edit_VVI()
+
+	def __mode_Enum(self):
+		if(self.mode == "AAT"):
+			return 0
+		if(self.mode == "VVT"):
+			return 1
+		if(self.mode == "AOO"):
+			return 2
+		if(self.mode == "AAI"):
+			return 3
+		if(self.mode == "VOO"):
+			return 4
+		if(self.mode == "VVI"):
+			return 5
+		if(self.mode == "VDD"):
+			return 6
+		if(self.mode == "DOO"):
+			return 7
+		if(self.mode == "DDI"):
+			return 8
+		if(self.mode == "DDD"):
+			return 9
+		if(self.mode == "AOOR"):
+			return 10
+		if(self.mode == "AAIR"):
+			return 11
+		if(self.mode == "VOOR"):
+			return 12
+		if(self.mode == "VVIR"):
+			return 13
+		if(self.mode == "VDDR"):
+			return 14
+		if(self.mode == "DOOR"):
+			return 15
+		if(self.mode == "DDIR"):
+			return 16
+		if(self.mode == "DDDR"):
+			return 17
 
 	def __check_In_Range(self): # Checks if the current data stored in the spinboxes is valid. NOTE: Checks spinboxes and NOT self.progParam as we don't want to potentially overwrite good data with bad data
 		inRange = 0 # 0 = in range; anything else = out of range
@@ -292,9 +332,35 @@ class Welcome():
 			self.progParam[3][4]=self.spinbox_VRP.get()
 			# print(self.progParam[3])
 
-	def __edit_MODE(self,mode):
+	def __edit_MODE(self,mode): # Displays the correct labels, spinboxes, and activates/deactivates the save/reset buttons
 		self.mode = mode
 		print(self.mode)
+
+		index = 0
+
+		for show in self.modeDict[self.mode]:
+			self.labelParams[index].pack_forget()
+			self.spinboxParams[index].pack_forget()
+			index+=1
+
+		index = 0
+
+		for show in self.modeDict[self.mode]:
+			if(int(show)):
+				self.labelParams[index].pack(side=TOP,fill=X,expand=False)
+				self.spinboxParams[index].pack(side=TOP,fill=X,expand=False)
+			else:
+				self.labelParams[index].pack_forget()
+				self.spinboxParams[index].pack_forget()
+			index+=1
+
+		index = 0
+
+		for show in self.modeDict[self.mode]:
+			if(int(show)):
+				self.spinboxParams[index].delete(0,"end")
+				self.spinboxParams[index].insert(0,self.progParam[self.__mode_Enum()][index])
+			index+=1
 
 	# def __edit_NONE(self): # Displays the correct labels & spinboxes, and activates/deactivates the save/reset to nominal buttons depending on the mode. The next functions are similar
 
@@ -585,65 +651,83 @@ class Welcome():
 		#===Parameter labels===#
 		self.progParamFrameItemsL = Frame(self.progParamFrame,bg="snow")
 		self.progParamFrameItemsL.pack(side=LEFT,fill=Y,expand=False)
-		self.label_LowerRateLimit = Label(self.progParamFrameItemsL,text="Lower Rate Limit: ",justify=LEFT,bg="snow")
-		self.label_UpperRateLimit = Label(self.progParamFrameItemsL,text="Upper Rate Limit: ",justify=LEFT,bg="snow")
-		self.label_MaxSensorRate = Label(self.progParamFrameItemsL,text="Maximum Sensor Rate: ",justify=LEFT,bg="snow")
-		self.label_FixedAVDelay = Label(self.progParamFrameItemsL,text="Fixed AV Delay: ",justify=LEFT,bg="snow")
-		self.label_DynamicAVDelay = Label(self.progParamFrameItemsL,text="Dynamic AV Delay: ",justify=LEFT,bg="snow")
-		self.label_MinDynamicAVDelay = Label(self.progParamFrameItemsL,text="Minimum Dynamic AV Delay: ",justify=LEFT,bg="snow")
-		self.label_SensedAVDelayOffset = Label(self.progParamFrameItemsL,text="Sensed AV Delay Offset: ",justify=LEFT,bg="snow")
-		self.label_atrPulseAmpReg = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Reg.: ",justify=LEFT,bg="snow")
-		self.label_ventPulseAmpReg = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Reg.: ",justify=LEFT,bg="snow")
-		self.label_atrPulseWidth = Label(self.progParamFrameItemsL,text="Atrial Pulse Width: ",justify=LEFT,bg="snow")
-		self.label_ventPulseWidth = Label(self.progParamFrameItemsL,text="Ventricular Pulse Width: ",justify=LEFT,bg="snow")
-		self.label_atrSensitivity = Label(self.progParamFrameItemsL,text="Atrial Sensitivity: ",justify=LEFT,bg="snow")
-		self.label_ventSensitivity = Label(self.progParamFrameItemsL,text="Ventricular Sensitivity: ",justify=LEFT,bg="snow")
-		self.label_ARP = Label(self.progParamFrameItemsL,text="Atrial Refractory Period: ",justify=LEFT,bg="snow")
-		self.label_VRP = Label(self.progParamFrameItemsL,text="Ventricular Refractory Period: ",justify=LEFT,bg="snow")
-		self.label_PVARP = Label(self.progParamFrameItemsL,text="PVARP: ",justify=LEFT,bg="snow")
-		self.label_PVARPExtension = Label(self.progParamFrameItemsL,text="PVARP Extension: ",justify=LEFT,bg="snow")
-		self.label_Hysteresis = Label(self.progParamFrameItemsL,text="Hysteresis: ",justify=LEFT,bg="snow")
-		self.label_RateSmoothing = Label(self.progParamFrameItemsL,text="Rate Smoothing: ",justify=LEFT,bg="snow")
-		self.label_ATRDurationCycles = Label(self.progParamFrameItemsL,text="ATR Duration Cycles: ",justify=LEFT,bg="snow")
-		self.label_ATRDurationLowerRange = Label(self.progParamFrameItemsL,text="ATR Duration Lower Range: ",justify=LEFT,bg="snow")
-		self.label_ATRDurationUpperRange = Label(self.progParamFrameItemsL,text="ATR Duration Upper Range: ",justify=LEFT,bg="snow")
-		self.label_ATRFallbackMode = Label(self.progParamFrameItemsL,text="ATR Fallback Mode: ",justify=LEFT,bg="snow")
-		self.label_ATRFallbackTime = Label(self.progParamFrameItemsL,text="ATR Fallback Time: ",justify=LEFT,bg="snow")
-		self.label_ActivityThreshold = Label(self.progParamFrameItemsL,text="Activity Threshold: ",justify=LEFT,bg="snow")
-		self.label_ReactionTime = Label(self.progParamFrameItemsL,text="Reaction Time: ",justify=LEFT,bg="snow")
-		self.label_ResponseFactor = Label(self.progParamFrameItemsL,text="ResponseFactor: ",justify=LEFT,bg="snow")
-		self.label_RecoveryTime = Label(self.progParamFrameItemsL,text="Recovery Time: ",justify=LEFT,bg="snow")
+		self.labelParams[0] = Label(self.progParamFrameItemsL,text="Lower Rate Limit: ",justify=LEFT,bg="snow")
+		self.labelParams[1] = Label(self.progParamFrameItemsL,text="Upper Rate Limit: ",justify=LEFT,bg="snow")
+		self.labelParams[2] = Label(self.progParamFrameItemsL,text="Maximum Sensor Rate: ",justify=LEFT,bg="snow")
+		self.labelParams[3] = Label(self.progParamFrameItemsL,text="Fixed AV Delay: ",justify=LEFT,bg="snow")
+		
+		self.labelParams[4] = Label(self.progParamFrameItemsL,text="Dynamic AV Delay: ",justify=LEFT,bg="snow")
+		self.labelParams[5] = Label(self.progParamFrameItemsL,text="Minimum Dynamic AV Delay: ",justify=LEFT,bg="snow")
+		self.labelParams[6] = Label(self.progParamFrameItemsL,text="Sensed AV Delay Offset: ",justify=LEFT,bg="snow")
+		self.labelParams[7] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Reg.: ",justify=LEFT,bg="snow")
+		
+		self.labelParams[8] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Reg.: ",justify=LEFT,bg="snow")
+		self.labelParams[9] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Unreg.: ",justify=LEFT,bg="snow")
+		self.labelParams[10] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Unreg.: ",justify=LEFT,bg="snow")
+		self.labelParams[11] = Label(self.progParamFrameItemsL,text="Atrial Pulse Width: ",justify=LEFT,bg="snow")
+		
+		self.labelParams[12] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Width: ",justify=LEFT,bg="snow")
+		self.labelParams[13] = Label(self.progParamFrameItemsL,text="Atrial Sensitivity: ",justify=LEFT,bg="snow")
+		self.labelParams[14] = Label(self.progParamFrameItemsL,text="Ventricular Sensitivity: ",justify=LEFT,bg="snow")
+		self.labelParams[15] = Label(self.progParamFrameItemsL,text="Venrticular Refractory Period: ",justify=LEFT,bg="snow")
+		
+		self.labelParams[16] = Label(self.progParamFrameItemsL,text="Atrial Refractory Period: ",justify=LEFT,bg="snow")
+		self.labelParams[17] = Label(self.progParamFrameItemsL,text="PVARP: ",justify=LEFT,bg="snow")
+		self.labelParams[18] = Label(self.progParamFrameItemsL,text="PVARP Extension: ",justify=LEFT,bg="snow")
+		self.labelParams[19] = Label(self.progParamFrameItemsL,text="Hysteresis: ",justify=LEFT,bg="snow")
+		
+		self.labelParams[20] = Label(self.progParamFrameItemsL,text="Rate Smoothing: ",justify=LEFT,bg="snow")
+		self.labelParams[21] = Label(self.progParamFrameItemsL,text="ATR Duration Cycles: ",justify=LEFT,bg="snow")
+		self.labelParams[22] = Label(self.progParamFrameItemsL,text="ATR Duration Lower Range: ",justify=LEFT,bg="snow")
+		self.labelParams[23] = Label(self.progParamFrameItemsL,text="ATR Duration Upper Range: ",justify=LEFT,bg="snow")
+		
+		self.labelParams[24] = Label(self.progParamFrameItemsL,text="ATR Fallback Mode: ",justify=LEFT,bg="snow")
+		self.labelParams[25] = Label(self.progParamFrameItemsL,text="ATR Fallback Time: ",justify=LEFT,bg="snow")
+		self.labelParams[26] = Label(self.progParamFrameItemsL,text="Ventricular Blanking: ",justify=LEFT,bg="snow")
+		self.labelParams[27] = Label(self.progParamFrameItemsL,text="Activity Threshold: ",justify=LEFT,bg="snow")
+		
+		self.labelParams[28] = Label(self.progParamFrameItemsL,text="Reaction Time: ",justify=LEFT,bg="snow")
+		self.labelParams[29] = Label(self.progParamFrameItemsL,text="Response Factor: ",justify=LEFT,bg="snow")
+		self.labelParams[30] = Label(self.progParamFrameItemsL,text="Recovery Time: ",justify=LEFT,bg="snow")
 
 		#===Parameter Spinboxes===#
 		self.progParamFrameItemsR = Frame(self.progParamFrame,bg="snow")
 		self.progParamFrameItemsR.pack(side=LEFT,fill=BOTH,expand=True)
-		self.spinbox_LowerRateLimit = Spinbox(self.progParamFrameItemsR,values=self.lowerRateLimitRange,bd=self.spinboxBD)
-		self.spinbox_UpperRateLimit = Spinbox(self.progParamFrameItemsR,values=self.upperRateLimitRange,bd=self.spinboxBD)
-		self.spinbox_MaxSensorRate = Spinbox(self.progParamFrameItemsR,values=self.maxSensorRateRange,bd=self.spinboxBD)
-		self.spinbox_FixedAVDelay = Spinbox(self.progParamFrameItemsR,values=self.fixedAVDelayRange,bd=self.spinboxBD)
-		self.spinbox_DynamicAVDelay = Spinbox(self.progParamFrameItemsR,values=self.dyanmicAVDelayRange,bd=self.spinboxBD)
-		self.spinbox_MinDynamicAVDelay = Spinbox(self.progParamFrameItemsR,values=self.minDynamicAVDelayRange,bd=self.spinboxBD)
-		self.spinbox_SensedAVDelayOffset = Spinbox(self.progParamFrameItemsR,values=self.sensedAVDelayOffsetRange,bd=self.spinboxBD)
-		self.spinbox_atrPulseAmpReg = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpRegRange,bd=self.spinboxBD)
-		self.spinbox_ventPulseAmpReg = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpRegRange,bd=self.spinboxBD)
-		self.spinbox_atrPulseWidth = Spinbox(self.progParamFrameItemsR,values=self.avPulseWidthRange,bd=self.spinboxBD)
-		self.spinbox_ventPulseWidth = Spinbox(self.progParamFrameItemsR,values=self.avPulseWidthRange,bd=self.spinboxBD)
-		self.spinbox_atrSensitivity = Spinbox(self.progParamFrameItemsR,values=self.aSensitivityRange,bd=self.spinboxBD)
-		self.spinbox_ventSensitivity = Spinbox(self.progParamFrameItemsR,values=self.vSensitivityRange,bd=self.spinboxBD)
-		self.spinbox_ARP = Spinbox(self.progParamFrameItemsR,values=self.ARPRange,bd=self.spinboxBD)
-		self.spinbox_VRP = Spinbox(self.progParamFrameItemsR,values=self.VRPRange,bd=self.spinboxBD)
-		self.spinbox_PVARP  = Spinbox(self.progParamFrameItemsR,values=self.pvarpRange,bd=self.spinboxBD)
-		self.spinbox_PVARPExtension = Spinbox(self.progParamFrameItemsR,values=self.pvarpExtensionRange,bd=self.spinboxBD)
-		self.spinbox_Hysteresis = Spinbox(self.progParamFrameItemsR,values=self.hysRange,bd=self.spinboxBD)
-		self.spinbox_RateSmoothing = Spinbox(self.progParamFrameItemsR,values=self.rateSmoothingRange,bd=self.spinboxBD)
-		self.spinbox_ATRDurationCycles = Spinbox(self.progParamFrameItemsR,values=self.atrDurationCyclesRange,bd=self.spinboxBD)
-		self.spinbox_ATRDurationLower = Spinbox(self.progParamFrameItemsR,values=self.atrDurationLowerRange,bd=self.spinboxBD)
-		self.spinbox_ATRDurationUpper = Spinbox(self.progParamFrameItemsR,values=self.atrDurationUpperRange,bd=self.spinboxBD)
-		self.spinbox_ATRFallbackMode = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackModeRange,bd=self.spinboxBD)
-		self.spinbox_ATRFallbackTime = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackTimeRange,bd=self.spinboxBD)
-		self.spinbox_ActivityThreshold = Spinbox(self.progParamFrameItemsR,values=self.activityThresholdRange,bd=self.spinboxBD)
-		self.spinbox_Reactiontime = Spinbox(self.progParamFrameItemsR,values=self.reactionTimeRange,bd=self.spinboxBD)
-		self.spinbox_ResponseFactor = Spinbox(self.progParamFrameItemsR,values=self.responseFactorRange,bd=self.spinboxBD)
-		self.spinbox_RecoveryTime = Spinbox(self.progParamFrameItemsR,values=self.recoveryTimeRange,bd=self.spinboxBD)
+		self.spinboxParams[0] = Spinbox(self.progParamFrameItemsR,values=self.lowerRateLimitRange,bd=self.spinboxBD)
+		self.spinboxParams[1] = Spinbox(self.progParamFrameItemsR,values=self.upperRateLimitRange,bd=self.spinboxBD)
+		self.spinboxParams[2] = Spinbox(self.progParamFrameItemsR,values=self.maxSensorRateRange,bd=self.spinboxBD)
+		self.spinboxParams[3] = Spinbox(self.progParamFrameItemsR,values=self.fixedAVDelayRange,bd=self.spinboxBD)
 		
-		self.root.mainloop()
+		self.spinboxParams[4] = Spinbox(self.progParamFrameItemsR,values=self.dyanmicAVDelayRange,bd=self.spinboxBD)
+		self.spinboxParams[5] = Spinbox(self.progParamFrameItemsR,values=self.minDynamicAVDelayRange,bd=self.spinboxBD)
+		self.spinboxParams[6] = Spinbox(self.progParamFrameItemsR,values=self.sensedAVDelayOffsetRange,bd=self.spinboxBD)
+		self.spinboxParams[7] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpRegRange,bd=self.spinboxBD)
+		
+		self.spinboxParams[8] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpRegRange,bd=self.spinboxBD)
+		self.spinboxParams[9] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpUnregRange,bd=self.spinboxBD)
+		self.spinboxParams[10] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpUnregRange,bd=self.spinboxBD)
+		self.spinboxParams[11] = Spinbox(self.progParamFrameItemsR,values=self.avPulseWidthRange,bd=self.spinboxBD)
+		
+		self.spinboxParams[12] = Spinbox(self.progParamFrameItemsR,values=self.avPulseWidthRange,bd=self.spinboxBD)
+		self.spinboxParams[13] = Spinbox(self.progParamFrameItemsR,values=self.aSensitivityRange,bd=self.spinboxBD)
+		self.spinboxParams[14] = Spinbox(self.progParamFrameItemsR,values=self.vSensitivityRange,bd=self.spinboxBD)
+		self.spinboxParams[15] = Spinbox(self.progParamFrameItemsR,values=self.VRPRange,bd=self.spinboxBD)
+		
+		self.spinboxParams[16] = Spinbox(self.progParamFrameItemsR,values=self.ARPRange,bd=self.spinboxBD)
+		self.spinboxParams[17]  = Spinbox(self.progParamFrameItemsR,values=self.pvarpRange,bd=self.spinboxBD)
+		self.spinboxParams[18] = Spinbox(self.progParamFrameItemsR,values=self.pvarpExtensionRange,bd=self.spinboxBD)
+		self.spinboxParams[19] = Spinbox(self.progParamFrameItemsR,values=self.hysRange,bd=self.spinboxBD)
+		
+		self.spinboxParams[20] = Spinbox(self.progParamFrameItemsR,values=self.rateSmoothingRange,bd=self.spinboxBD)
+		self.spinboxParams[21] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationCyclesRange,bd=self.spinboxBD)
+		self.spinboxParams[22] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationLowerRange,bd=self.spinboxBD)
+		self.spinboxParams[23] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationUpperRange,bd=self.spinboxBD)
+		
+		self.spinboxParams[24] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackModeRange,bd=self.spinboxBD)
+		self.spinboxParams[25] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackTimeRange,bd=self.spinboxBD)
+		self.spinboxParams[26] = Spinbox(self.progParamFrameItemsR,values=self.ventricularBlankingRange,bd=self.spinboxBD)
+		self.spinboxParams[27] = Spinbox(self.progParamFrameItemsR,values=self.activityThresholdRange,bd=self.spinboxBD)
+
+		self.spinboxParams[28] = Spinbox(self.progParamFrameItemsR,values=self.reactionTimeRange,bd=self.spinboxBD)
+		self.spinboxParams[29] = Spinbox(self.progParamFrameItemsR,values=self.responseFactorRange,bd=self.spinboxBD)
+		self.spinboxParams[30] = Spinbox(self.progParamFrameItemsR,values=self.recoveryTimeRange,bd=self.spinboxBD)
