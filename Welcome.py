@@ -22,16 +22,24 @@
   # 3.) edit __get_Vals - PSEUDO CODE WRITTEN									COMPLETED
   # 4.) replace edit_XXX's with 1 function - PSEUDO CODE WRITTEN				COMPLETED
   # 5.) add all buttons in __create_Welcome_Window								COMPLETED
+# Create 'update' method to update screen when values change 					COMPLETED
+  # This method would be called 'refreshScreen'									COMPLETED
 
 #===TODO===#
-# Create 'update' method to update screen when values change
-  # This method would be called 'refreshScreen'
 # Create more descriptive error messages
   # Having some issues in __check_In_Range function. Come back to this.
+  # If you save a value, it should be obvious that it was saved
+# Main GUI, make it more obvious what to do
+  # Replace 'Pacing Modes' label with 'Select a Pacing Mode'
+  # When pressing reset, ask the user to confirm
+  # Logout button
+  # Prompt 'Do you want to save' when you change modes without saving
 # Serial comms b/w DCM and board
   # Transmit parameter and mode data
   # Conduct error checking
 # Implement egram
+# Show past 2 actions (save/reset)
+  # Maybe have a window at the bottom, or have a 'log' file that saves all past actions
 
 #===IMPORT===#
 from tkinter import*
@@ -79,7 +87,7 @@ class Welcome():
 		self.ARPRange = list(range(150,510,10))															#16
 		self.pvarpRange = list(range(150,501,10))														#17
 		self.pvarpExtensionRange = list(('OFF'))+list(range(50,401,50))									#18
-		self.hysRange = ['OFF']+list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5))					#19
+		self.hysRange = ['OFF']+list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5))			#19
 		self.rateSmoothingRange = list(('OFF',3,6,9,12,15,18,21,25))									#20
 		self.atrFallBackModeRange = list(('OFF','ON'))													#24
 		self.atrDurationCyclesRange = list(range(10,11,1))												#21
@@ -145,15 +153,15 @@ class Welcome():
 		file = RW()
 		file.set_ProgParam(self.progParam)
 
-	def __get_Default_Values(self,code): # Gets default nominal values from rw class instead of primary user values. Has the option of reading default for all parameters, or just for 1 mode
+	def __get_Default_Values(self,mode): # Gets default nominal values from rw class instead of primary user values. Has the option of reading default for all parameters, or just for 1 mode
 		file=RW()						 # if code = -1, set all values to default, if not, only set 1 modes' values to default
-		if(code==-1):
+		if(mode==-1):
 			self.progParam=file.get_ProgParam(1)
 		else:
-			self.progParam[code]=file.get_ProgParam(1)[code]
+			self.progParam[mode]=file.get_ProgParam(1)[mode]
 
 	def __set_Default_Values(self): # Sets default nominal values for one mode by using the rw class
-		self.__get_Default_Values(self.mode)
+		self.__get_Default_Values(self.__mode_Enum())
 		self.__set_User_Data()
 		self.__refresh_Screen()
 		# if(self.mode==0):
@@ -457,7 +465,7 @@ class Welcome():
 
 	def __create_Welcome_Window(self): # Creates the main GUI using .pack()
 		self.root.title("DCM")
-		self.root.geometry("500x750+500+100")
+		self.root.geometry("500x500+500+100")
 		
 		self.metaDataFrame = Frame(self.root,bg="grey50",bd=4)
 		self.metaDataFrame.pack(side = TOP,fill=X,expand=False)
