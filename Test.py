@@ -30,3 +30,6 @@ modeDict = {
 	"DDDR":"1111111111111111111111111"
 }
 mode = "DDD"
+
+for thing in modeDict[mode]:
+	print(thing)
