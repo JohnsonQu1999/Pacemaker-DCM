@@ -46,3 +46,11 @@
 # 	progParam.append(p2[i].strip().split(","))
 
 # print(progParam)
+
+testFloat = 3.5
+progParam = ['3.5']
+
+print(str(float(testFloat)))
+print(str(float(progParam[0])))
+
+print((float(testFloat)) == (float(progParam[0])))
