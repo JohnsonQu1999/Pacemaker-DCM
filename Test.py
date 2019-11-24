@@ -47,10 +47,19 @@
 
 # print(progParam)
 
-testFloat = 3.5
-progParam = ['3.5']
+# testFloat = 3.5
+# progParam = ['3.5']
 
-print(str(float(testFloat)))
-print(str(float(progParam[0])))
+# print(str(float(testFloat)))
+# print(str(float(progParam[0])))
 
-print((float(testFloat)) == (float(progParam[0])))
+# print((float(testFloat)) == (float(progParam[0])))
+
+from rw import*
+
+thing = RW()
+
+thing.append_To_Log("1")
+thing.append_To_Log("2")
+
+print(thing.get_Logs())

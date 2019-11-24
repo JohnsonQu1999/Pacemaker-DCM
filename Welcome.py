@@ -26,13 +26,13 @@
   # This method would be called 'refreshScreen'									COMPLETED
 
 #===TODO===#
-# Main GUI, make it more obvious what to do
+# Main GUI, make it more obvious what to do 									WIP
   # Replace 'Pacing Modes' label with 'Select a Pacing Mode'					COMPLETED
   # When pressing reset, ask the user to confirm 								COMPLETED
+  # Prompt 'Do you want to save' when you change modes without saving			COMPLETED
   # Logout button
-  # Prompt 'Do you want to save' when you change modes without saving
-# Create more descriptive error messages
-  # Having some issues in __check_In_Range function. Come back to this.
+# Create more descriptive error messages										WIP
+  # Having some issues in __check_In_Range function. Come back to this.			COMPLETED
   # If you save a value, it should be obvious that it was saved
 # Serial comms b/w DCM and board
   # Transmit parameter and mode data
@@ -106,6 +106,13 @@ class Welcome():
 			self.aSensitivityRange,self.vSensitivityRange,self.VRPRange,self.ARPRange,self.pvarpRange,self.pvarpExtensionRange,self.hysRange,self.rateSmoothingRange,self.atrDurationCyclesRange,
 			self.atrDurationLowerRange,self.atrDurationUpperRange,self.atrFallBackModeRange,self.atrFallBackTimeRange,self.ventricularBlankingRange,self.activityThresholdRange,
 			self.reactionTimeRange,self.responseFactorRange,self.recoveryTimeRange)) 					# Combining all ranges into a list
+
+		self.parameterNamesParam = ["Lower Rate Limit","Upper Rate Limit","Maximum Sensor Rate","Fixed AV Delay","Dynamic AV Delay","Minimum Dynamic AV Delay",
+		"Sensed AV Delay Offset","Atrial Pulse Amplitude Regulated","Ventricular Pulse Amplitude Regulated","Atrial Pulse Amplitude Unregulated",
+		"Ventricular Pulse Amplitude Unregulated","Atrial Pulse Width","Ventricular Pulse Width","Atrial Sensitivity","Ventricular Sensitivity",
+		"Ventricular Regulatory Pulse","Atrial Regulatory Pulse","PVARP","PVARP Extension","Hysteresis","Rate Smoothing","Atrial Fallback Mode",
+		"Atrial Duration Cycles","Atrial Duration Lower Range","Atrial Duration Upper Range","Ventricular Blanking","Atrial Fall Back Time","Activity Threshold",
+		"Reaction Time","Response Factor","Recovery Time"]
 
 		self.progParam = []
 
@@ -191,35 +198,35 @@ class Welcome():
 	def __check_In_Range(self): # Checks if the current data stored in the spinboxes is valid. NOTE: Checks spinboxes and NOT self.progParam as we don't want to potentially overwrite good data with bad data
 		index = 0
 
-		print("check mode: "+self.mode)
+		print("Checking for valid values in mode: "+self.mode)
 		for check in self.modeDict[self.mode]:
 			if(check == '1'):
-				print("check int")
+				print("check int for "+self.parameterNamesParam[index])
 				try:
 					if((int(self.spinboxParams[index].get()) in self.rangesParam[index]) == 0):
 						# print("1Data out of Range"+"Entered value of "+self.spinboxParams[index].get()+" not in allowed range of "+self.rangesParam[index]+"!")
 						# messagebox.showerror("Out of range! Possible values below.",self.rangesParam[index])
-						promptWindow4("Data out of Range","Entered value:",self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
+						promptWindow5("Data out of Range","Entered value:",self.parameterNamesParam[index],self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
 						return 1
 				except:
-					print("check float")
+					print("check float for "+self.parameterNamesParam[index])
 					try:
 						if((float(self.spinboxParams[index].get()) in self.rangesParam[index]) == 0):
 							# print("2Data out of Range"+"Entered value of "+self.spinboxParams[index].get()+" not in allowed range of "+self.rangesParam[index]+"!")
 							# messagebox.showerror("Out of range! Possible values below.",self.rangesParam[index])
-							promptWindow4("Data out of Range","Entered value:",self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
+							promptWindow5("Data out of Range","Entered value:",self.parameterNamesParam[index],self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
 							return 1
 					except:
-						print("check string")
+						print("check string for "+self.parameterNamesParam[index])
 						try:
 							if((self.spinboxParams[index].get() in self.rangesParam[index]) == 0):
 								# print("3Data out of Range"+"Entered value of "+self.spinboxParams[index].get()+" not in allowed range of "+self.rangesParam[index]+"!")
 								# messagebox.showerror("Out of range! Possible values below.",self.rangesParam[index])
-								promptWindow4("Data out of Range","Entered values:",self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
+								promptWindow5("Data out of Range","Entered values:",self.parameterNamesParam[index],self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
 								return 1
 						except:
 							# messagebox.showerror("Out of range! Possible values below.",self.rangesParam[index])
-							promptWindow4("Data out of Range","Entered value:",self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
+							promptWindow5("Data out of Range","Entered value:",self.parameterNamesParam[index],self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
 							return 1
 			index+=1
 
@@ -227,7 +234,7 @@ class Welcome():
 
 	def __check_If_Same(self): # returns 0 if spinbox values match stored. returns 1 else
 		index = 0
-		print(self.mode)
+		print("Checking for unsaved values in "+self.mode)
 		for check in self.modeDict[self.mode]:
 			if(check == '1'):
 				if(self.progParam[self.__mode_Enum()][index] != self.spinboxParams[index].get()):
@@ -280,7 +287,8 @@ class Welcome():
 		if(self.mode == "DDDR"):
 			return 17
 
-	def __show_MODE(self,mode):
+	def __show_MODE(self,mode): # Displays the correct labels, spinboxes, and activates/deactivates the save/reset buttons
+		# If values different from stored, confirm if they want to switch
 		self.mode = mode
 
 		index = 0
@@ -351,16 +359,21 @@ class Welcome():
 		elif(self.__mode_Enum() == 15):
 			self.but_DOOR.config(relief='sunken')
 
-	def __edit_MODE(self,mode): # Displays the correct labels, spinboxes, and activates/deactivates the save/reset buttons
-		# If values different from stored, confirm if they want to switch
-
+	def __edit_MODE(self,mode): # Checks if unsaved errors exist. If so, prompt user to go back and save or ignore. Calls __show_MODE(,) to actually view the mode
 		if(self.__check_If_Same() == 1):
 			# Confirm w/ user
-			print("There are unsaved changes. Do you want to go back and save?")
+			confirmDoNotSave = Tk()
+			confirmDoNotSave.title("Are you sure?")
 
-		print("--------")
+			def __confirmed(window):
+				window.destroy()
+				self.__show_MODE(mode);
 
-		self.__show_MODE(mode);
+			Label(confirmDoNotSave,text="There are unsaved changes. Do you want to go back and save?").pack()
+			Button(confirmDoNotSave,text="Yes, go back and save changes.",command=confirmDoNotSave.destroy).pack(fill=X)
+			Button(confirmDoNotSave,text="No, switch modes and delete changes.",command=lambda:__confirmed(confirmDoNotSave)).pack(fill=X)
+		else:
+			self.__show_MODE(mode)
 
 	def __create_Welcome_Window(self): # Creates the main GUI using .pack()
 		self.root.title("DCM")

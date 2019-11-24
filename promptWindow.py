@@ -35,6 +35,17 @@ def promptWindow4(title,message1,message2,message3,message4):
 	Label(promptScreen, text=message4).pack()
 	Button(promptScreen,text="Okay", command=promptScreen.destroy).pack()
 
+def promptWindow5(title,message1,message2,message3,message4,message5):
+	promptScreen = Tk()
+	promptScreen.title(title)
+
+	Label(promptScreen, text=message1).pack()
+	Label(promptScreen, text=message2).pack()
+	Label(promptScreen, text=message3).pack()
+	Label(promptScreen, text=message4).pack()
+	Label(promptScreen, text=message5).pack()
+	Button(promptScreen,text="Okay", command=promptScreen.destroy).pack()
+
 	# Material order January 1st
 	# Design review first week of January
 	# Packaging review first week of January - needs to be 100% done by end of December
