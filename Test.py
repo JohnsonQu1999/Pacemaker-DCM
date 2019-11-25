@@ -55,11 +55,26 @@
 
 # print((float(testFloat)) == (float(progParam[0])))
 
-from rw import*
+# from rw import*
 
-thing = RW()
+# thing = RW()
+# # l = ['']
+# # print(str(len(l)))
+# thing.append_To_Log("6")
 
-thing.append_To_Log("1")
-thing.append_To_Log("2")
+# print(thing.get_Logs())
 
-print(thing.get_Logs())
+# test = [1,2,3,4]
+# # print(test)
+# # test = []
+# # print(test)
+# # test.append(1)
+# # print(test)
+
+# tempArray = test
+# test = []
+
+# for i in range(1,4):
+# 	test.append(tempArray[i])
+
+# print(test)

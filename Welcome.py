@@ -17,29 +17,31 @@
   # we care about, as is page 28 of the PACEMAKER document
   # Issues: how do we determine mode? maybe check against a dictionary
   # PREREQ's: 1.) modify data storage string format (needs to include all 25 options for each mode,
-  # with NA's anywhere it's not applicable)										COMPLETED
-  # 2.) edit __check_In_Range - PSEUDO CODE WRITTEN								COMPLETED
-  # 3.) edit __get_Vals - PSEUDO CODE WRITTEN									COMPLETED
-  # 4.) replace edit_XXX's with 1 function - PSEUDO CODE WRITTEN				COMPLETED
-  # 5.) add all buttons in __create_Welcome_Window								COMPLETED
-# Create 'update' method to update screen when values change 					COMPLETED
-  # This method would be called 'refreshScreen'									COMPLETED
+  # with NA's anywhere it's not applicable)													COMPLETED
+  # 2.) edit __check_In_Range - PSEUDO CODE WRITTEN											COMPLETED
+  # 3.) edit __get_Vals - PSEUDO CODE WRITTEN												COMPLETED
+  # 4.) replace edit_XXX's with 1 function - PSEUDO CODE WRITTEN							COMPLETED
+  # 5.) add all buttons in __create_Welcome_Window											COMPLETED
+# Create 'update' method to update screen when values change 								COMPLETED
+  # This method would be called 'refreshScreen'												COMPLETED
 
 #===TODO===#
-# Main GUI, make it more obvious what to do 									WIP
-  # Replace 'Pacing Modes' label with 'Select a Pacing Mode'					COMPLETED
-  # When pressing reset, ask the user to confirm 								COMPLETED
-  # Prompt 'Do you want to save' when you change modes without saving			COMPLETED
+# Main GUI, make it more obvious what to do 												WIP
+  # Replace 'Pacing Modes' label with 'Select a Pacing Mode'								COMPLETED
+  # When pressing reset, ask the user to confirm 											COMPLETED
+  # Prompt 'Do you want to save' when you change modes without saving						COMPLETED
+  # Prompt 'Do you want to save' before saving (in case of a misclick)						WIP
   # Logout button
-# Create more descriptive error messages										WIP
-  # Having some issues in __check_In_Range function. Come back to this.			COMPLETED
+# Create more descriptive error messages													WIP
+  # Having some issues in __check_In_Range function. Come back to this.						COMPLETED
   # If you save a value, it should be obvious that it was saved
 # Serial comms b/w DCM and board
   # Transmit parameter and mode data
   # Conduct error checking
 # Implement egram
 # Show past 2 actions (save/reset)
-  # Maybe have a window at the bottom, or have a 'log' file that saves all past actions
+  # Maybe have a window at the bottom, or have a 'log' file that saves all past actions 	DONE
+# Take care of enum for simulink															IMPORTANT
 
 #===IMPORT===#
 from tkinter import*
@@ -115,6 +117,7 @@ class Welcome():
 		"Reaction Time","Response Factor","Recovery Time"]
 
 		self.progParam = []
+		self.logContents = []
 
 		self.numParams = 31
 		self.labelParams = [None]*self.numParams
@@ -176,11 +179,13 @@ class Welcome():
 		self.__get_Default_Values(self.__mode_Enum())
 		self.__set_User_Data()
 		self.__refresh_Screen()
+		self.__write_To_Log("Loaded default parameters for mode "+str(self.mode))
 	
 	def __save_Param(self): # Saves the data currently in spinboxes by reading all data, checking if its in range then finally calling the __set_User_Data() function 
 		if(self.__check_In_Range()==0): # If the data is bad, it displays an error and reset the spinboxes to what they were at before
 			self.__get_Vals()
 			self.__set_User_Data()
+			# self.__write_To_Log("Saved parameters from mode "+str(self.mode))
 		else:
 			self.__refresh_Screen()
 
@@ -193,6 +198,7 @@ class Welcome():
 		for get in self.modeDict[self.mode]:
 			if(get == '1'):
 				self.progParam[self.__mode_Enum()][index] = self.spinboxParams[index].get()
+				self.__write_To_Log("MODE: "+self.mode+". Saved parameter "+self.parameterNamesParam[index]+" ("+self.progParam[self.__mode_Enum()][index]+")")
 			index+=1
 
 	def __check_In_Range(self): # Checks if the current data stored in the spinboxes is valid. NOTE: Checks spinboxes and NOT self.progParam as we don't want to potentially overwrite good data with bad data
@@ -246,6 +252,40 @@ class Welcome():
 			index+=1
 
 		return 0
+
+	def __write_To_Log(self,text):
+		log = RW()
+		log.append_To_Log(text)
+
+	def __show_Log(self):
+		self.mainFrame.pack_forget()
+		self.logFrame.pack(side=TOP,fill=BOTH,expand=True)
+		self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logTextFrame.pack(side=TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logFrameScrollbar.pack(side=RIGHT,fill=Y,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+
+		logs = RW()
+		self.logContents = logs.get_Logs()
+
+		#===Delete old text===#
+		self.logText.delete("0.0",END)
+
+		#===Print new text===#
+		for line in self.logContents:
+			# print(line)
+			self.logText.insert(END,line)
+			self.logText.insert(END,"\n")
+
+		self.logText.pack() # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		##display text here
+
+		self.logInfoActionsFrame.pack(side=BOTTOM,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logReturnButton.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+	
+	def __show_Main_Frame(self):
+		self.logFrame.pack_forget()
+		self.mainFrame.pack(side=TOP,fill=BOTH,expand=True)
 
 	def __mode_Enum(self):
 		if(self.mode == "Off"):
@@ -323,6 +363,7 @@ class Welcome():
 		else:
 			self.but_Save.config(state=NORMAL)
 			self.but_Reset.config(state=NORMAL)
+			self.but_ViewLog.config(state=NORMAL)
 
 		self.but_Off.config(relief='raised')
 		self.but_AOO.config(relief='raised')
@@ -377,9 +418,17 @@ class Welcome():
 
 	def __create_Welcome_Window(self): # Creates the main GUI using .pack()
 		self.root.title("DCM")
-		self.root.geometry("500x500+100+100")
+		self.root.geometry("660x500+100+100")
 		
-		self.metaDataFrame = Frame(self.root,bg="grey50",bd=4)
+		# There are 2 high level frames, 'Main frame' and 'log frame'
+			# Interact with parameters in the main frame
+			# See the log file in the log frame
+
+		#===Main Frame Setup===#
+		self.mainFrame = Frame(self.root)
+		self.mainFrame.pack(side=TOP,fill=BOTH,expand=True)
+
+		self.metaDataFrame = Frame(self.mainFrame,bg="grey50",bd=4)
 		self.metaDataFrame.pack(side = TOP,fill=X,expand=False)
 		self.Ind11 = Label(self.metaDataFrame, text="Communication Status: ",bg="grey50",fg="snow")
 		self.Ind11.pack(side=LEFT)
@@ -390,7 +439,7 @@ class Welcome():
 		self.Ind22 = Label(self.metaDataFrame, textvariable=self.boardStatusInd,bg="grey50",fg="snow")
 		self.Ind22.pack(side = LEFT)
 
-		self.otherFrame = Frame(self.root,bg="yellow")
+		self.otherFrame = Frame(self.mainFrame,bg="yellow")
 		self.otherFrame.pack(side = BOTTOM,fill=BOTH,expand=True)
 
 		#===Pacing mode selection explorer===#
@@ -431,10 +480,16 @@ class Welcome():
 		self.progParamFrameLabel = Label(self.progParamFrameTop,text="Edit Parameters",justify=LEFT,bg="gainsboro",fg="black")
 		self.progParamFrameLabel.pack()
 
+		#===View Log Action===#
+		self.progParamFrameLogActions = Frame(self.progParamFrame,bg="snow")
+		self.progParamFrameLogActions.pack(side=BOTTOM,fill=X,expand=False)
+		self.but_ViewLog = Button(self.progParamFrameLogActions,text="View past Actions (Log)",state=DISABLED,command=self.__show_Log,bg="snow",fg="black")
+		self.but_ViewLog.pack(side=RIGHT)
+
 		#===Save & Reset Actions===#
 		self.progParamFrameActions = Frame(self.progParamFrame,bg="snow")
 		self.progParamFrameActions.pack(side=BOTTOM,fill=X,expand=False)
-		self.but_Save = Button(self.progParamFrameActions,text="Save Parameters",state=DISABLED,command=self.__save_Param,bg="snow",fg="black")
+		self.but_Save = Button(self.progParamFrameActions,text="Save parameters and Run current mode",state=DISABLED,command=self.__save_Param,bg="snow",fg="black")
 		self.but_Save.pack(side=LEFT)
 		self.but_Reset = Button(self.progParamFrameActions,text="Reset parameters to nominal",state=DISABLED,command=self.__confirm_Reset_Default_Values,bg="snow",fg="black")
 		self.but_Reset.pack(side=LEFT)
@@ -524,3 +579,31 @@ class Welcome():
 		self.spinboxParams[30] = Spinbox(self.progParamFrameItemsR,values=self.recoveryTimeRange,bd=self.spinboxBD)
 
 		self.but_Off.config(relief='sunken')
+
+		#===Log Frame Setup===#
+		self.logFrame = Frame(self.root)
+		# self.logFrame.pack(side=TOP,fill=BOTH,expand=True) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		
+		#===Top info bar===#
+		self.logInfoFrame = Frame(self.logFrame,bg="grey50",bd=4)
+		# self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.Info1 = Label(self.logInfoFrame, text="Viewing up to 100 actions in order from most recent to oldest: ",bg="grey50",fg="snow")
+		# self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		
+		#===Middle Text area===#
+		self.logTextFrame = Frame(self.logFrame)
+
+		self.logText = Text(self.logTextFrame)
+		# self.logText.pack() # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+
+		# self.logTextFrame.pack(side=TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logFrameScrollbar = Scrollbar(self.logTextFrame,command=self.logText.yview)
+		# self.logFrameScrollbar.pack(side=RIGHT,fill=Y,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+
+		self.logText['yscrollcommand'] = self.logFrameScrollbar.set
+
+		#===Bottom actions bar==#
+		self.logInfoActionsFrame = Frame(self.logFrame)
+		# self.logInfoActionsFrame.pack(side=BOTTOM,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logReturnButton = Button(self.logInfoActionsFrame,text="Return to Main Screen",state=NORMAL,command=self.__show_Main_Frame,bg="snow",fg="black")
+		# self.logReturnButton.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!

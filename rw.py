@@ -77,33 +77,51 @@ class RW():
 
 ### For Logs
 
-	def __read_Logs(self):
+	def __read_Logs(self):	
 		try:
 			f=open(self.logFileName,"r")
 			p1=f.read()
 			f.close()
 
-			p2=p1.split(";")
+			if(p1 != ''):
 
-			self.logLines = len(p2)
+				# print("__read_Logs: Try1")
 
-			for i in range(self.logLines):
-				self.progParam.append(p2[i].strip())
+				p2=p1.strip().split(";")
+
+				# print("__read_Logs: Try2")
+
+				# print(p2)
+				# print(len(p2))
+
+				for i in range(len(p2)):
+					self.progParam.append(p2[i].strip())
+
+				# print("__read_Logs: Try 3")
+
+				self.logLines = len(self.progParam)
+				# print("__read_Logs: # lines: "+str(self.logLines))
+			else:
+				self.progParam = []
+				self.logLines = len(self.progParam)
 		except:
+			# print("__read_Logs: Excepted")
 			f=open(self.logFileName,"w+")
 			f.close()
+			progParam = []
+			self.logLines = len(progParam)
 
-		print("Printing file contents")
-		self.__print_File()
+		# print("__read_Logs: Printing progParam")
+		# self.__print_File()
 
-	def __reverse_ProgParamList(self):
+	def __reverse_ProgParamList(self):	# WORKS
 		tempArray = self.progParam
 		self.progParam = []
 
 		for i in range(self.logLines):
 			self.progParam.append(tempArray[self.logLines-1-i])
 
-	def __remove_First_Log_Item(self):
+	def __remove_First_Log_Item(self):	# WORKS
 		tempArray = self.progParam
 		self.progParam = []
 
@@ -112,6 +130,9 @@ class RW():
 
 	def __write_Logs(self):
 		f=open(self.logFileName,"w+")
+
+		# print("__write_Logs: Printing file contents (should be nothing)")
+		# self.__print_File()
 
 		for i in range(len(self.progParam)):
 			f.write(self.progParam[i])
@@ -130,9 +151,13 @@ class RW():
 		self.__read_Logs()
 
 		if(self.logLines >= self.maxLogLines):
+			print("append_To_Log: more than 100 lines")
 			self.__remove_First_Log_Item()
 
-		self.progParam.append(text)
+		# print("append_To_Log: appending string: "+str(text))
+		self.progParam.append(str(text))
+		# print("append_To_Log: Printing progParam: ")
+		# print(self.progParam)
 		self.__write_Logs()			
 
 	def __print_File(self):
