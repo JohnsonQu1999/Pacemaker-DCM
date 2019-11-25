@@ -1,0 +1,3 @@
+from parent import*
+
+Begin()
