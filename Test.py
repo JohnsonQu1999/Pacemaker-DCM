@@ -78,3 +78,55 @@
 # 	test.append(tempArray[i])
 
 # print(test)
+
+# from copy import deepcopy
+
+# first = [[1,2],[3,4],[5,6]]
+# second = deepcopy(first)
+
+# first[0][0] = 10
+
+# for i in range(len(first)):
+# 	print(first[i])
+# 	print(second[i])
+
+import tkinter as tk
+import random
+
+
+class MainApp(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+
+        self.tx_value = tk.StringVar()
+        self.tx_value.set("test")
+        self.blink_status = 1
+
+        self.tx_label = tk.Label(self, textvariable=self.tx_value, relief=tk.GROOVE, width=4, height=2)
+        self.tx_label.grid(row=0, column=4, sticky=tk.E)
+        self.blink_tx()
+
+    def blink_tx_step_2(self, color=None):
+        if color != None:
+            self.tx_label["bg"] = color
+        self.after(3500, self.blink_tx)
+
+    def blink_tx(self):
+        if self.blink_status == 1:
+            self.tx_label["bg"] = 'green'
+            self.tx_value.set('Tx')
+            self.blink_status = random.randint(0, 2)
+            self.after(1000, self.blink_tx_step_2, 'blue')
+        elif self.blink_status == 0:
+            self.tx_label["bg"] = 'red'
+            self.tx_value.set('*')
+            self.blink_status = random.randint(0, 2)
+            self.after(2000, self.blink_tx_step_2, 'orange')
+        else:
+            self.tx_label["bg"] = 'red'
+            self.tx_value.set('x')
+            self.blink_status = random.randint(0, 2)
+            self.after(2000, self.blink_tx_step_2)
+
+app = MainApp()
+app.mainloop()

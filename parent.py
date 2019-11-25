@@ -4,6 +4,11 @@ from Welcome import *
 
 
 #import all files
+class Begin():
+	def __init__(self):
+		print("begin text")
+		Parent()
+
 class Parent():
 	def __init__(self):
 		self.screen = Tk()
@@ -120,7 +125,5 @@ class Parent():
 		self.login.logframe.pack_forget() 
 		self.register.reg.pack()	
 
-# start = Parent()
-
-screen = Tk()
-Welcome(screen)
+# screen = Tk()
+# Welcome(screen)

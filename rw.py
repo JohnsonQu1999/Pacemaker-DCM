@@ -19,7 +19,7 @@ class RW():
 		self.fileName="file.txt"
 		self.defaultFileName="defaultUserData.txt"
 		self.logFileName = "log.txt"
-		self.maxLogLines = 100
+		self.maxLogLines = 250
 		self.logLines = 0
 		self.progParam = []
 		
