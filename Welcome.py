@@ -635,11 +635,11 @@ class Welcome():
 		self.Ind11.pack(side=LEFT)
 		self.Ind12 = Label(self.metaDataFrame, textvariable=self.commsStatusInd,bg="grey50",fg="snow",font=self.fontMeta)
 		self.Ind12.pack(side = LEFT)
-		self.Ind21 = Label(self.metaDataFrame, text="Board Status: ",bg="grey50",fg="snow",font=self.fontMeta)
+		self.Ind21 = Label(self.metaDataFrame, text="   Board Status: ",bg="grey50",fg="snow",font=self.fontMeta)
 		self.Ind21.pack(side=LEFT)
 		self.Ind22 = Label(self.metaDataFrame, textvariable=self.boardStatusInd,bg="grey50",fg="snow",font=self.fontMeta)
 		self.Ind22.pack(side = LEFT)
-		self.UpdateIndicatorLabel = Label(self.metaDataFrame,text="Refreshing in: ",bg="grey50",fg="snow",font=self.fontMeta)
+		self.UpdateIndicatorLabel = Label(self.metaDataFrame,text="   Refreshing in: ",bg="grey50",fg="snow",font=self.fontMeta)
 		self.UpdateIndicatorLabel.pack(side=LEFT)
 		self.UpdateIndicatorVar = Label(self.metaDataFrame,textvariable=self.refreshTimeVar,bg="grey50",fg="snow",font=self.fontMeta)
 		self.UpdateIndicatorVar.pack(side=LEFT)
@@ -807,9 +807,9 @@ class Welcome():
 		#===Top info bar===#
 		self.logInfoFrame = Frame(self.logFrame,bg="grey50",bd=4)
 		# self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.Info1 = Label(self.logInfoFrame, text="Viewing up to 250 actions in order from most recent to oldest: ",bg="grey50",fg="snow")
+		self.Info1 = Label(self.logInfoFrame, text="Viewing up to 250 actions in order from most recent to oldest: ",bg="grey50",fg="snow",font=self.fontMeta)
 		# self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.but1_Logout = Button(self.logInfoFrame,text="Logout",state=NORMAL,command=self.__logout,bg="snow",fg="black")
+		self.but1_Logout = Button(self.logInfoFrame,text="Logout",state=NORMAL,command=self.__logout,bg="snow",fg="black",font=self.fontButton)
 		# self.but1_Logout.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 
 		#===Middle Text area===#
