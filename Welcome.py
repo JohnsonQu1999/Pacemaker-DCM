@@ -24,7 +24,7 @@
   # 5.) add all buttons in __create_Welcome_Window															COMPLETED
 # Create 'update' method to update screen when values change 												COMPLETED
   # This method would be called 'refreshScreen'																COMPLETED
-# Main GUI, make it more obvious what to do 																COMPLETED
+# Main GUI, make it more user friendly																		COMPLETED
   # Replace 'Pacing Modes' label with 'Select a Pacing Mode'												COMPLETED
   # When pressing reset, ask the user to confirm 															COMPLETED
   # Prompt 'Do you want to save' when you change modes without saving										COMPLETED
@@ -51,6 +51,7 @@
 
 #===IMPORT===#
 from tkinter import*
+from tkinter import font
 from tkinter import messagebox
 from rw import*
 from promptWindow import*
@@ -127,20 +128,39 @@ class Welcome():
 		self.progParam = []
 		self.progParamTMinus1 = []
 		self.logContents = []
+		self.commsStatusInd = StringVar()
+		self.boardStatusInd = StringVar()
+		self.refreshTimeVar = StringVar()
+		self.refreshTime = 0
+
 
 		self.numParams = 31
 		self.labelParams = [None]*self.numParams
 		self.spinboxParams = [None]*self.numParams
 		self.commsStatus = 1 # 0 means good status
 		self.boardStatus = 1 # 0 means good board
+		
+		self.butFill = BOTH
+		self.butWidth = "10"
+		self.butAnchor = "e"
 		self.spinboxBD = 2
+		self.spinboxWidth = 15
+		self.paddingWidthVert = 2
+		self.paddingWidthHorz = 4
+		self.headingsHeight = 2
+		self.spinboxJustify = "center"
+		self.popupLocation = "+150+300"
+
+		self.fontHeading = font.Font(family="BebasNeue-Regular",size=18)
+		self.fontButton = font.Font(family="Helvetica Neue",size=11)
+		self.fontLabel = font.Font(family="Helvetica Neue",size=12)
+		self.fontSpinbox = font.Font(family="Helvetica Neue",size=12)
+		self.fontMeta = font.Font(family="Helvetica Neue",size=10)
+
 		self.root = screen
-		self.commsStatusInd = StringVar()
-		self.commsStatusInd.set(self.__get_Comms_Status())
-		self.boardStatusInd = StringVar()
-		self.boardStatusInd.set(self.__get_Board_Status())
 
 		self.__get_User_Data()
+		self.__start_Status_Check_Loop(self.refreshTime)
 		self.__create_Welcome_Window()
 
 		self.root.mainloop() #All statements must occur before this line as .mainloop() traps it for all eternity. (.mainloop ~ while(1))
@@ -156,6 +176,65 @@ class Welcome():
 			return "GOOD"
 		else:
 			return "BAD"
+	
+	def __set_Meta_Status(self): # Sets the board & comms status, using the getter functions for comms and board
+		self.commsStatusInd.set(self.__get_Comms_Status())
+		self.boardStatusInd.set(self.__get_Board_Status())
+
+	def __start_Status_Check_Loop(self,secondsToCheck): # Runs repeatedly to check the comms and board status by using the .after() function
+		self.refreshTimeVar.set(str(secondsToCheck))
+
+		# print(".__start_Status_Check_Loop")
+
+		if(secondsToCheck <= 0):
+			self.__set_Meta_Status()
+			print("Check")
+			secondsToCheck = 10
+		else:
+			secondsToCheck = secondsToCheck-1
+
+		# print(self.refreshTimeVar.get())
+
+		self.root.after(1000,self.__start_Status_Check_Loop,secondsToCheck)
+
+	def __set_Mode_Param(self): # Method to tell the pacemaker what mode we want to run, and with what parameters
+		progParamParsed = self.progParam # Parsed parameter array
+
+		index = 0
+
+		for param in self.modeDict[self.mode]: # Parsing the parameter array to remove all 'NA's
+			if(param == 1):
+				progParamParsed.append(self.progParam[index])
+
+		# serial = Serial() # Instantiating a serial object
+
+		# if(serial.upload_Parameters(self.mode,progParamParsed) == 0): # Writing to the board, feedback depending on return value
+		# 	print("success")
+		# else:
+		# 	print("failure")
+
+	def __get_Mode_Param(self):
+		progParamUnParsed = []
+
+		# serial = Serial()
+
+		# progParamUnParsed = serial.download_Parameters(self.mode)
+
+		if(progParamUnParsed == -1):
+			print("failure")
+			return
+
+		indexParsed = 0
+		indexUnparsed = 0
+
+		for param in self.modeDict[self.mode]:
+			if (param == 1):
+				self.progParam.append(progParamUnParsed[indexUnParsed])
+				indexUnparsed+=1
+				indexParsed+=1
+			else:
+				self.progParam.append("NA")
+				indexParsed+=1
 
 	def __get_User_Data(self): # Gets programmable parameters from rw class
 		file=RW()
@@ -170,16 +249,30 @@ class Welcome():
 		if(mode==-1):
 			self.progParam=file.get_ProgParam(1)
 		else:
+			self.progParamTMinus1=deepcopy(self.progParam)
 			self.progParam[mode]=file.get_ProgParam(1)[mode]
+
+			index = 0
+
+			for get in self.modeDict[self.mode]:
+				if(get == '1'):
+					print("Old: "+self.progParamTMinus1[self.__mode_Enum()][index])
+					print("New: "+self.progParam[self.__mode_Enum()][index])
+					if(self.progParam[self.__mode_Enum()][index] != self.progParamTMinus1[self.__mode_Enum()][index]):
+						self.__write_To_Log("MODE: "+self.mode+". RESET Parameter: "+self.parameterNamesParam[index]+" to default ("+self.progParamTMinus1[self.__mode_Enum()][index]+"->"+self.progParam[self.__mode_Enum()][index]+")")
+					else:
+						self.__write_To_Log("MODE: "+self.mode+". Parameter: "+self.parameterNamesParam[index]+" ("+self.progParam[self.__mode_Enum()][index]+")")
+				index+=1
 
 	def __confirm_Reset_Default_Values(self):
 		confirmReset = Tk()
-		confirmReset.geometry("+300+650")
+		confirmReset.geometry(self.popupLocation)
 		confirmReset.title("Reset to default values?")
 
 		def __confirmed(window):
 			window.destroy()
 			self.__set_Default_Values()
+			self.__flashSpinboxParams()
 
 		Label(confirmReset,text="Are you sure you want to reset to nominal values?").pack()
 		Button(confirmReset,text="Yes, reset to nominal values.",command=lambda:__confirmed(confirmReset)).pack(fill=X)
@@ -192,83 +285,26 @@ class Welcome():
 		self.__write_To_Log("Loaded default parameters for mode "+str(self.mode))
 	
 	def __save_Param(self): # Saves the data currently in spinboxes by reading all data, checking if its in range then finally calling the __set_User_Data() function 
-		confirmSave = Tk()
-		confirmSave.geometry("+300+650")
-		confirmSave.title("Run "+self.mode+"?")
+		if(self.__check_In_Range()==0): # If the data is bad, it displays an error and reset the spinboxes to what they were at before
+			confirmSave = Tk()
+			confirmSave.geometry(self.popupLocation)
+			confirmSave.title("Run "+self.mode+"?")
 
-		def __confirmed(window):
-			window.destroy()
-			if(self.__check_In_Range()==0): # If the data is bad, it displays an error and reset the spinboxes to what they were at before
+			def __confirmed(window):
+				window.destroy()
 				self.__get_Vals()
 				self.__set_User_Data()
 				self.__flashSpinboxParams(0)
-			else:
-				self.__refresh_Screen()
-
-		Label(confirmSave,text="Are you sure you want to run "+self.mode+"?").pack()
-		Button(confirmSave,text="Yes, run "+self.mode+".",command=lambda:__confirmed(confirmSave)).pack(fill=X)
-		Button(confirmSave,text="No, return to editor.",command=confirmSave.destroy).pack(fill=X)
-
-	def __flashSpinboxParams(self,step):
-		if(step == 0):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray9"
-				self.labelParams[i]["bg"] = "gray9"
-			self.root.after(10,self.__flashSpinboxParams,1)
-		elif(step == 1):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray19"
-				self.labelParams[i]["bg"] = "gray19"
-			self.root.after(20,self.__flashSpinboxParams,2)
-		elif(step == 2):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray29"
-				self.labelParams[i]["bg"] = "gray29"
-			self.root.after(30,self.__flashSpinboxParams,3)
-		elif(step == 3):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray39"
-				self.labelParams[i]["bg"] = "gray39"
-			self.root.after(40,self.__flashSpinboxParams,4)
-		elif(step == 4):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray49"
-				self.labelParams[i]["bg"] = "gray49"
-			self.root.after(50,self.__flashSpinboxParams,5)
-		elif(step == 5):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray59"
-				self.labelParams[i]["bg"] = "gray59"
-			self.root.after(60,self.__flashSpinboxParams,6)
-		elif(step == 6):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray69"
-				self.labelParams[i]["bg"] = "gray69"
-			self.root.after(70,self.__flashSpinboxParams,7)
-		elif(step == 7):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray79"
-				self.labelParams[i]["bg"] = "gray79"
-			self.root.after(80,self.__flashSpinboxParams,8)
-		elif(step == 8):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray89"
-				self.labelParams[i]["bg"] = "gray89"
-			self.root.after(90,self.__flashSpinboxParams,9)
-		elif(step == 9):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "gray99"
-				self.labelParams[i]["bg"] = "gray99"
-			self.root.after(100,self.__flashSpinboxParams,10)
-		elif(step == 10):
-			for i in range(31):
-				self.spinboxParams[i]["bg"] = "snow"
-				self.labelParams[i]["bg"] = "snow"
-			self.root.after(110,self.__flashSpinboxParams,11)
-		return
+	
+			Label(confirmSave,text="Are you sure you want to run "+self.mode+"?").pack()
+			Button(confirmSave,text="Yes, run "+self.mode+".",command=lambda:__confirmed(confirmSave)).pack(fill=X)
+			Button(confirmSave,text="No, return to editor.",command=confirmSave.destroy).pack(fill=X)
+		else:
+			self.__refresh_Screen()
 
 	def __refresh_Screen(self):
 		self.__show_MODE(self.mode)
+		# This comment serves no purpose beside letting me minimize the function
 
 	def __get_Vals(self): # Saves relevant spinbox data into self.progParam depending on what pacing mode the user is editing
 		index = 0
@@ -283,7 +319,7 @@ class Welcome():
 				print("Old: "+self.progParamTMinus1[self.__mode_Enum()][index])
 				print("New: "+self.progParam[self.__mode_Enum()][index])
 				if(self.progParam[self.__mode_Enum()][index] != self.progParamTMinus1[self.__mode_Enum()][index]):
-					self.__write_To_Log("MODE: "+self.mode+". UPDATED Parameter: "+self.parameterNamesParam[index]+" ("+self.progParam[self.__mode_Enum()][index]+"->"+self.progParamTMinus1[self.__mode_Enum()][index]+")")
+					self.__write_To_Log("MODE: "+self.mode+". UPDATED Parameter: "+self.parameterNamesParam[index]+" ("+self.progParamTMinus1[self.__mode_Enum()][index]+"->"+self.progParam[self.__mode_Enum()][index]+")")
 				else:
 					self.__write_To_Log("MODE: "+self.mode+". Parameter: "+self.parameterNamesParam[index]+" ("+self.progParam[self.__mode_Enum()][index]+")")
 			index+=1
@@ -342,9 +378,81 @@ class Welcome():
 
 		return 0
 
+	def __flashSpinboxParams(self,step=0):
+		if(step == 0):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray9"
+				self.labelParams[i]["bg"] = "gray9"
+			self.root.after(10,self.__flashSpinboxParams,1)
+		elif(step == 1):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray19"
+				self.labelParams[i]["bg"] = "gray19"
+			self.root.after(20,self.__flashSpinboxParams,2)
+		elif(step == 2):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray29"
+				self.labelParams[i]["bg"] = "gray29"
+			self.root.after(30,self.__flashSpinboxParams,3)
+		elif(step == 3):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray39"
+				self.labelParams[i]["bg"] = "gray39"
+			self.root.after(40,self.__flashSpinboxParams,4)
+		elif(step == 4):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray49"
+				self.labelParams[i]["bg"] = "gray49"
+			self.root.after(50,self.__flashSpinboxParams,5)
+		elif(step == 5):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray59"
+				self.labelParams[i]["bg"] = "gray59"
+			self.root.after(60,self.__flashSpinboxParams,6)
+		elif(step == 6):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray69"
+				self.labelParams[i]["bg"] = "gray69"
+			self.root.after(70,self.__flashSpinboxParams,7)
+		elif(step == 7):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray79"
+				self.labelParams[i]["bg"] = "gray79"
+			self.root.after(80,self.__flashSpinboxParams,8)
+		elif(step == 8):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray89"
+				self.labelParams[i]["bg"] = "gray89"
+			self.root.after(90,self.__flashSpinboxParams,9)
+		elif(step == 9):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "gray99"
+				self.labelParams[i]["bg"] = "gray99"
+			self.root.after(100,self.__flashSpinboxParams,10)
+		elif(step == 10):
+			for i in range(31):
+				self.spinboxParams[i]["bg"] = "snow"
+				self.labelParams[i]["bg"] = "snow"
+			self.root.after(110,self.__flashSpinboxParams,11)
+		return
+
 	def __write_To_Log(self,text):
 		log = RW()
 		log.append_To_Log(text)
+
+	def __welcome_Prompts(self):
+		welcomeWindow = Tk()
+		welcomeWindow.geometry(self.popupLocation)
+		welcomeWindow.title("Welcome")
+
+		def __confirmed(window):
+			window.destroy()
+
+		Label(welcomeWindow,text="Start by selecting a mode on the left hand explorer").pack()
+		Label(welcomeWindow,text="Next, edit the parameters as required, followed by Saving and Running the selected mode").pack()
+		Label(welcomeWindow,text="If you make an error, you can view past actions by clicking the 'Log' button at the bottom right").pack()
+		Label(welcomeWindow,text="You can also load default values if you wish by clicking 'Reset parameters to Nominal' at the bottom").pack()
+		Button(welcomeWindow,text="Okay",command=lambda:__confirmed(welcomeWindow)).pack(fill=X)
 
 	def __show_Log(self):
 		self.mainFrame.pack_forget()
@@ -353,6 +461,7 @@ class Welcome():
 		self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 		self.logTextFrame.pack(side=TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 		self.logFrameScrollbar.pack(side=RIGHT,fill=Y,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.but1_Logout.pack(side=RIGHT)
 
 		logs = RW()
 		self.logContents = logs.get_Logs()
@@ -434,11 +543,8 @@ class Welcome():
 
 		for show in self.modeDict[self.mode]:
 			if(int(show)):
-				self.labelParams[index].pack(side=TOP,fill=X,expand=False)
-				self.spinboxParams[index].pack(side=TOP,fill=X,expand=False)
-			else:
-				self.labelParams[index].pack_forget()
-				self.spinboxParams[index].pack_forget()
+				self.labelParams[index].pack(side=TOP,anchor="e",fill=Y,expand=False)
+				self.spinboxParams[index].pack(side=TOP,anchor="w",fill=Y,expand=False)
 			index+=1
 
 		index = 0
@@ -449,13 +555,13 @@ class Welcome():
 				self.spinboxParams[index].insert(0,self.progParam[self.__mode_Enum()][index])
 			index+=1
 
-		if(self.__mode_Enum() == -1):
-			self.but_Save.config(state=DISABLED)
-			self.but_Reset.config(state=DISABLED)
-		else:
-			self.but_Save.config(state=NORMAL)
-			self.but_Reset.config(state=NORMAL)
-			self.but_ViewLog.config(state=NORMAL)
+		# if(self.__mode_Enum() == -1):
+		# 	self.but_Save.config(state=DISABLED)
+		# 	self.but_Reset.config(state=DISABLED)
+		# else:
+		self.but_Save.config(state=NORMAL)
+		self.but_Reset.config(state=NORMAL)
+		self.but_ViewLog.config(state=NORMAL)
 
 		self.but_Off.config(relief='raised')
 		self.but_AOO.config(relief='raised')
@@ -496,6 +602,7 @@ class Welcome():
 		if(self.__check_If_Same() == 1):
 			# Confirm w/ user
 			confirmDoNotSave = Tk()
+			confirmDoNotSave.geometry(self.popupLocation)
 			confirmDoNotSave.title("Are you sure?")
 
 			def __confirmed(window):
@@ -509,8 +616,8 @@ class Welcome():
 			self.__show_MODE(mode)
 
 	def __create_Welcome_Window(self): # Creates the main GUI using .pack()
-		self.root.title("DCM")
-		self.root.geometry("660x500+100+100")
+		self.root.title("Digital Communications Module")
+		self.root.geometry("850x600+100+100")
 		
 		# There are 2 high level frames, 'Main frame' and 'log frame'
 			# Interact with parameters in the main frame
@@ -523,155 +630,173 @@ class Welcome():
 		#===Top Status bar + Logout===#
 		self.metaDataFrame = Frame(self.mainFrame,bg="grey50",bd=4)
 		self.metaDataFrame.pack(side = TOP,fill=X,expand=False)
-		self.Ind11 = Label(self.metaDataFrame, text="Communication Status: ",bg="grey50",fg="snow")
+		
+		self.Ind11 = Label(self.metaDataFrame, text="Communication Status: ",bg="grey50",fg="snow",font=self.fontMeta)
 		self.Ind11.pack(side=LEFT)
-		self.Ind12 = Label(self.metaDataFrame, textvariable=self.commsStatusInd,bg="grey50",fg="snow")
+		self.Ind12 = Label(self.metaDataFrame, textvariable=self.commsStatusInd,bg="grey50",fg="snow",font=self.fontMeta)
 		self.Ind12.pack(side = LEFT)
-		self.Ind21 = Label(self.metaDataFrame, text="Board Status: ",bg="grey50",fg="snow")
+		self.Ind21 = Label(self.metaDataFrame, text="Board Status: ",bg="grey50",fg="snow",font=self.fontMeta)
 		self.Ind21.pack(side=LEFT)
-		self.Ind22 = Label(self.metaDataFrame, textvariable=self.boardStatusInd,bg="grey50",fg="snow")
+		self.Ind22 = Label(self.metaDataFrame, textvariable=self.boardStatusInd,bg="grey50",fg="snow",font=self.fontMeta)
 		self.Ind22.pack(side = LEFT)
-		self.but_Logout = Button(self.metaDataFrame,text="Logout",state=NORMAL,command=self.__logout,bg="snow",fg="black")
+		self.UpdateIndicatorLabel = Label(self.metaDataFrame,text="Refreshing in: ",bg="grey50",fg="snow",font=self.fontMeta)
+		self.UpdateIndicatorLabel.pack(side=LEFT)
+		self.UpdateIndicatorVar = Label(self.metaDataFrame,textvariable=self.refreshTimeVar,bg="grey50",fg="snow",font=self.fontMeta)
+		self.UpdateIndicatorVar.pack(side=LEFT)
+		self.but_Logout = Button(self.metaDataFrame,text="Logout",state=NORMAL,command=self.__logout,bg="snow",fg="black",font=self.fontButton)
 		self.but_Logout.pack(side=RIGHT)
 
+		#===Bottom frames===#
 		self.otherFrame = Frame(self.mainFrame,bg="yellow")
 		self.otherFrame.pack(side = BOTTOM,fill=BOTH,expand=True)
 
 		#===Pacing mode selection explorer===#
-		self.pacingModesFrame = Frame(self.otherFrame,bg="gainsboro")
+		self.pacingModesFrame = Frame(self.otherFrame,bg="snow")
 		self.pacingModesFrame.pack(side = LEFT,fill=Y,expand=False)
-		self.pacingModesLabel = Label(self.pacingModesFrame,text="Select a Pacing Mode",justify=LEFT,bg="gainsboro",fg="black")
+
+		self.pacingModesLabel = Label(self.pacingModesFrame,text="Select a Pacing Mode",justify=LEFT,width="20",height=self.headingsHeight,bg="snow",fg="black",font=self.fontHeading)
 		self.pacingModesLabel.pack(side=TOP)
-		self.but_Off = Button(self.pacingModesFrame,text="Off",bg="snow",fg="black",command=lambda:self.__edit_MODE("Off"))
-		self.but_Off.pack(side=TOP,fill=X)
-		self.but_AOO = Button(self.pacingModesFrame,text="AOO",bg="snow",fg="black",command=lambda:self.__edit_MODE("AOO"))
-		self.but_AOO.pack(side=TOP,fill=X)
-		self.but_VOO = Button(self.pacingModesFrame,text="VOO",bg="snow",fg="black",command=lambda:self.__edit_MODE("VOO"))
-		self.but_VOO.pack(side=TOP,fill=X)
-		self.but_AAI = Button(self.pacingModesFrame,text="AAI",bg="snow",fg="black",command=lambda:self.__edit_MODE("AAI"))
-		self.but_AAI.pack(side=TOP,fill=X)
-		self.but_VVI = Button(self.pacingModesFrame,text="VVI",bg="snow",fg="black",command=lambda:self.__edit_MODE("VVI"))
-		self.but_VVI.pack(side=TOP,fill=X)
-		self.but_DOO = Button(self.pacingModesFrame,text="DOO",bg="snow",fg="black",command=lambda:self.__edit_MODE("DOO"))
-		self.but_DOO.pack(side=TOP,fill=X)
-		self.but_AOOR = Button(self.pacingModesFrame,text="AOOR",bg="snow",fg="black",command=lambda:self.__edit_MODE("AOOR"))
-		self.but_AOOR.pack(side=TOP,fill=X)
-		self.but_AAIR = Button(self.pacingModesFrame,text="AAIR",bg="snow",fg="black",command=lambda:self.__edit_MODE("AAIR"))
-		self.but_AAIR.pack(side=TOP,fill=X)
-		self.but_VOOR = Button(self.pacingModesFrame,text="VOOR",bg="snow",fg="black",command=lambda:self.__edit_MODE("VOOR"))
-		self.but_VOOR.pack(side=TOP,fill=X)
-		self.but_VVIR = Button(self.pacingModesFrame,text="VVIR",bg="snow",fg="black",command=lambda:self.__edit_MODE("VVIR"))
-		self.but_VVIR.pack(side=TOP,fill=X)
-		self.but_DOOR = Button(self.pacingModesFrame,text="DOOR",bg="snow",fg="black",command=lambda:self.__edit_MODE("DOOR"))
-		self.but_DOOR.pack(side=TOP,fill=X)
+		self.but_Off = Button(self.pacingModesFrame,text="Off",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("Off"))
+		self.but_Off.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_AOO = Button(self.pacingModesFrame,text="AOO",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AOO"))
+		self.but_AOO.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_VOO = Button(self.pacingModesFrame,text="VOO",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VOO"))
+		self.but_VOO.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_AAI = Button(self.pacingModesFrame,text="AAI",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AAI"))
+		self.but_AAI.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_VVI = Button(self.pacingModesFrame,text="VVI",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VVI"))
+		self.but_VVI.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_DOO = Button(self.pacingModesFrame,text="DOO",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("DOO"))
+		self.but_DOO.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_AOOR = Button(self.pacingModesFrame,text="AOOR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AOOR"))
+		self.but_AOOR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_AAIR = Button(self.pacingModesFrame,text="AAIR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AAIR"))
+		self.but_AAIR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_VOOR = Button(self.pacingModesFrame,text="VOOR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VOOR"))
+		self.but_VOOR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_VVIR = Button(self.pacingModesFrame,text="VVIR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VVIR"))
+		self.but_VVIR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
+		self.but_DOOR = Button(self.pacingModesFrame,text="DOOR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("DOOR"))
+		self.but_DOOR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
 
 		#===Parameter explorer===#
 		self.progParamFrame = Frame(self.otherFrame,bg="black")
 		self.progParamFrame.pack(side = RIGHT,fill=BOTH,expand=True)
 
 		#===Description===#
-		self.progParamFrameTop = Frame(self.progParamFrame,bg="gainsboro")
+		self.progParamFrameTop = Frame(self.progParamFrame,bg="snow")
 		self.progParamFrameTop.pack(side=TOP,fill=X,expand=False)
-		self.progParamFrameLabel = Label(self.progParamFrameTop,text="Edit Parameters",justify=LEFT,bg="gainsboro",fg="black")
+		self.progParamFrameLabel = Label(self.progParamFrameTop,text="Edit Parameters",justify=LEFT,height=self.headingsHeight,bg="snow",fg="black",font=self.fontHeading)
 		self.progParamFrameLabel.pack()
+
+		#===Parameter explorer top side padding===#
+		self.progParamFrameTopPadding = Frame(self.progParamFrame,bg="gainsboro",width=self.paddingWidthHorz)
+		self.progParamFrameTopPadding.pack(side=TOP,fill=X,expand=False)
+
+		#===Parameter explorer left side padding===#
+		self.progParamFrameLeftPadding1 = Frame(self.progParamFrame,bg="gainsboro",width=self.paddingWidthVert)
+		self.progParamFrameLeftPadding1.pack(side=LEFT,fill=Y,expand=False)
+		self.progParamFrameLeftPadding2 = Frame(self.progParamFrame,bg="snow",width="50")
+		self.progParamFrameLeftPadding2.pack(side=LEFT,fill=Y,expand=False)
 
 		#===View Log Action===#
 		self.progParamFrameLogActions = Frame(self.progParamFrame,bg="snow")
 		self.progParamFrameLogActions.pack(side=BOTTOM,fill=X,expand=False)
-		self.but_ViewLog = Button(self.progParamFrameLogActions,text="View past Actions (Log)",state=DISABLED,command=self.__show_Log,bg="snow",fg="black")
+		self.but_ViewLog = Button(self.progParamFrameLogActions,text="View past Actions (Log)",state=DISABLED,command=self.__show_Log,bg="snow",fg="black",font=self.fontButton)
 		self.but_ViewLog.pack(side=RIGHT)
 
 		#===Save & Reset Actions===#
 		self.progParamFrameActions = Frame(self.progParamFrame,bg="snow")
 		self.progParamFrameActions.pack(side=BOTTOM,fill=X,expand=False)
-		self.but_Save = Button(self.progParamFrameActions,text="Save parameters and Run current mode",state=DISABLED,command=self.__save_Param,bg="snow",fg="black")
-		self.but_Save.pack(side=LEFT)
-		self.but_Reset = Button(self.progParamFrameActions,text="Reset parameters to nominal",state=DISABLED,command=self.__confirm_Reset_Default_Values,bg="snow",fg="black")
-		self.but_Reset.pack(side=LEFT)
+		self.but_Reset = Button(self.progParamFrameActions,text="Reset parameters to nominal",state=DISABLED,command=self.__confirm_Reset_Default_Values,bg="snow",fg="black",font=self.fontButton)
+		self.but_Reset.pack(side=RIGHT)
+		self.but_Save = Button(self.progParamFrameActions,text="Save parameters and Run current mode",state=DISABLED,command=self.__save_Param,bg="snow",fg="black",font=self.fontButton)
+		self.but_Save.pack(side=RIGHT)
+
 
 		#===Parameter labels===#
 		self.progParamFrameItemsL = Frame(self.progParamFrame,bg="snow")
 		self.progParamFrameItemsL.pack(side=LEFT,fill=Y,expand=False)
-		self.labelParams[0] = Label(self.progParamFrameItemsL,text="Lower Rate Limit (ppm): ",justify=LEFT,bg="snow")
-		self.labelParams[1] = Label(self.progParamFrameItemsL,text="Upper Rate Limit (ppm): ",justify=LEFT,bg="snow")
-		self.labelParams[2] = Label(self.progParamFrameItemsL,text="Maximum Sensor Rate (ppm): ",justify=LEFT,bg="snow")
-		self.labelParams[3] = Label(self.progParamFrameItemsL,text="Fixed AV Delay (ms): ",justify=LEFT,bg="snow")
+		self.labelParams[0] = Label(self.progParamFrameItemsL,text="Lower Rate Limit (ppm): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[1] = Label(self.progParamFrameItemsL,text="Upper Rate Limit (ppm): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[2] = Label(self.progParamFrameItemsL,text="Maximum Sensor Rate (ppm): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[3] = Label(self.progParamFrameItemsL,text="Fixed AV Delay (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
 		
-		self.labelParams[4] = Label(self.progParamFrameItemsL,text="Dynamic AV Delay (ms): ",justify=LEFT,bg="snow")
-		self.labelParams[5] = Label(self.progParamFrameItemsL,text="Minimum Dynamic AV Delay (ms): ",justify=LEFT,bg="snow")
-		self.labelParams[6] = Label(self.progParamFrameItemsL,text="Sensed AV Delay Offset (ms): ",justify=LEFT,bg="snow")
-		self.labelParams[7] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Reg. (V): ",justify=LEFT,bg="snow")
+		self.labelParams[4] = Label(self.progParamFrameItemsL,text="Dynamic AV Delay (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[5] = Label(self.progParamFrameItemsL,text="Minimum Dynamic AV Delay (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[6] = Label(self.progParamFrameItemsL,text="Sensed AV Delay Offset (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[7] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Reg. (V): ",justify=LEFT,bg="snow",font=self.fontLabel)
 		
-		self.labelParams[8] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Reg. (V): ",justify=LEFT,bg="snow")
-		self.labelParams[9] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Unreg. (V): ",justify=LEFT,bg="snow")
-		self.labelParams[10] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Unreg. (V): ",justify=LEFT,bg="snow")
-		self.labelParams[11] = Label(self.progParamFrameItemsL,text="Atrial Pulse Width (ms): ",justify=LEFT,bg="snow")
+		self.labelParams[8] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Reg. (V): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[9] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Unreg. (V): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[10] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Unreg. (V): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[11] = Label(self.progParamFrameItemsL,text="Atrial Pulse Width (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
 		
-		self.labelParams[12] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Width (ms): ",justify=LEFT,bg="snow")
-		self.labelParams[13] = Label(self.progParamFrameItemsL,text="Atrial Sensitivity (mV): ",justify=LEFT,bg="snow")
-		self.labelParams[14] = Label(self.progParamFrameItemsL,text="Ventricular Sensitivity (mV): ",justify=LEFT,bg="snow")
-		self.labelParams[15] = Label(self.progParamFrameItemsL,text="Venrticular Refractory Period (ms): ",justify=LEFT,bg="snow")
+		self.labelParams[12] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Width (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[13] = Label(self.progParamFrameItemsL,text="Atrial Sensitivity (mV): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[14] = Label(self.progParamFrameItemsL,text="Ventricular Sensitivity (mV): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[15] = Label(self.progParamFrameItemsL,text="Venrticular Refractory Period (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
 		
-		self.labelParams[16] = Label(self.progParamFrameItemsL,text="Atrial Refractory Period (ms): ",justify=LEFT,bg="snow")
-		self.labelParams[17] = Label(self.progParamFrameItemsL,text="PVARP (ms): ",justify=LEFT,bg="snow")
-		self.labelParams[18] = Label(self.progParamFrameItemsL,text="PVARP Extension (ms): ",justify=LEFT,bg="snow")
-		self.labelParams[19] = Label(self.progParamFrameItemsL,text="Hysteresis (ppm): ",justify=LEFT,bg="snow")
+		self.labelParams[16] = Label(self.progParamFrameItemsL,text="Atrial Refractory Period (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[17] = Label(self.progParamFrameItemsL,text="PVARP (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[18] = Label(self.progParamFrameItemsL,text="PVARP Extension (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[19] = Label(self.progParamFrameItemsL,text="Hysteresis (ppm): ",justify=LEFT,bg="snow",font=self.fontLabel)
 		
-		self.labelParams[20] = Label(self.progParamFrameItemsL,text="Rate Smoothing (%): ",justify=LEFT,bg="snow")
-		self.labelParams[21] = Label(self.progParamFrameItemsL,text="ATR Duration Cycles (N/A): ",justify=LEFT,bg="snow")
-		self.labelParams[22] = Label(self.progParamFrameItemsL,text="ATR Duration Lower Range: ",justify=LEFT,bg="snow")
-		self.labelParams[23] = Label(self.progParamFrameItemsL,text="ATR Duration Upper Range: ",justify=LEFT,bg="snow")
+		self.labelParams[20] = Label(self.progParamFrameItemsL,text="Rate Smoothing (%): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[21] = Label(self.progParamFrameItemsL,text="ATR Duration Cycles (N/A): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[22] = Label(self.progParamFrameItemsL,text="ATR Duration Lower Range: ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[23] = Label(self.progParamFrameItemsL,text="ATR Duration Upper Range: ",justify=LEFT,bg="snow",font=self.fontLabel)
 		
-		self.labelParams[24] = Label(self.progParamFrameItemsL,text="ATR Mode: ",justify=LEFT,bg="snow")
-		self.labelParams[25] = Label(self.progParamFrameItemsL,text="ATR Fallback Time (min): ",justify=LEFT,bg="snow")
-		self.labelParams[26] = Label(self.progParamFrameItemsL,text="Ventricular Blanking (ms): ",justify=LEFT,bg="snow")
-		self.labelParams[27] = Label(self.progParamFrameItemsL,text="Activity Threshold: ",justify=LEFT,bg="snow")
+		self.labelParams[24] = Label(self.progParamFrameItemsL,text="ATR Mode: ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[25] = Label(self.progParamFrameItemsL,text="ATR Fallback Time (min): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[26] = Label(self.progParamFrameItemsL,text="Ventricular Blanking (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[27] = Label(self.progParamFrameItemsL,text="Activity Threshold: ",justify=LEFT,bg="snow",font=self.fontLabel)
 		
-		self.labelParams[28] = Label(self.progParamFrameItemsL,text="Reaction Time (s): ",justify=LEFT,bg="snow")
-		self.labelParams[29] = Label(self.progParamFrameItemsL,text="Response Factor: ",justify=LEFT,bg="snow")
-		self.labelParams[30] = Label(self.progParamFrameItemsL,text="Recovery Time (min): ",justify=LEFT,bg="snow")
+		self.labelParams[28] = Label(self.progParamFrameItemsL,text="Reaction Time (s): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[29] = Label(self.progParamFrameItemsL,text="Response Factor: ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[30] = Label(self.progParamFrameItemsL,text="Recovery Time (min): ",justify=LEFT,bg="snow",font=self.fontLabel)
 
 		#===Parameter Spinboxes===#
 		self.progParamFrameItemsR = Frame(self.progParamFrame,bg="snow")
 		self.progParamFrameItemsR.pack(side=LEFT,fill=BOTH,expand=True)
-		self.spinboxParams[0] = Spinbox(self.progParamFrameItemsR,values=self.lowerRateLimitRange,bd=self.spinboxBD)
-		self.spinboxParams[1] = Spinbox(self.progParamFrameItemsR,values=self.upperRateLimitRange,bd=self.spinboxBD)
-		self.spinboxParams[2] = Spinbox(self.progParamFrameItemsR,values=self.maxSensorRateRange,bd=self.spinboxBD)
-		self.spinboxParams[3] = Spinbox(self.progParamFrameItemsR,values=self.fixedAVDelayRange,bd=self.spinboxBD)
+		self.spinboxParams[0] = Spinbox(self.progParamFrameItemsR,values=self.lowerRateLimitRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[1] = Spinbox(self.progParamFrameItemsR,values=self.upperRateLimitRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[2] = Spinbox(self.progParamFrameItemsR,values=self.maxSensorRateRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[3] = Spinbox(self.progParamFrameItemsR,values=self.fixedAVDelayRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 		
-		self.spinboxParams[4] = Spinbox(self.progParamFrameItemsR,values=self.dyanmicAVDelayRange,bd=self.spinboxBD)
-		self.spinboxParams[5] = Spinbox(self.progParamFrameItemsR,values=self.minDynamicAVDelayRange,bd=self.spinboxBD)
-		self.spinboxParams[6] = Spinbox(self.progParamFrameItemsR,values=self.sensedAVDelayOffsetRange,bd=self.spinboxBD)
-		self.spinboxParams[7] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpRegRange,bd=self.spinboxBD)
+		self.spinboxParams[4] = Spinbox(self.progParamFrameItemsR,values=self.dyanmicAVDelayRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[5] = Spinbox(self.progParamFrameItemsR,values=self.minDynamicAVDelayRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[6] = Spinbox(self.progParamFrameItemsR,values=self.sensedAVDelayOffsetRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[7] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpRegRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 		
-		self.spinboxParams[8] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpRegRange,bd=self.spinboxBD)
-		self.spinboxParams[9] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpUnregRange,bd=self.spinboxBD)
-		self.spinboxParams[10] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpUnregRange,bd=self.spinboxBD)
-		self.spinboxParams[11] = Spinbox(self.progParamFrameItemsR,values=self.avPulseWidthRange,bd=self.spinboxBD)
+		self.spinboxParams[8] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpRegRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[9] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpUnregRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[10] = Spinbox(self.progParamFrameItemsR,values=self.avPulseAmpUnregRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[11] = Spinbox(self.progParamFrameItemsR,values=self.avPulseWidthRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 		
-		self.spinboxParams[12] = Spinbox(self.progParamFrameItemsR,values=self.avPulseWidthRange,bd=self.spinboxBD)
-		self.spinboxParams[13] = Spinbox(self.progParamFrameItemsR,values=self.aSensitivityRange,bd=self.spinboxBD)
-		self.spinboxParams[14] = Spinbox(self.progParamFrameItemsR,values=self.vSensitivityRange,bd=self.spinboxBD)
-		self.spinboxParams[15] = Spinbox(self.progParamFrameItemsR,values=self.VRPRange,bd=self.spinboxBD)
+		self.spinboxParams[12] = Spinbox(self.progParamFrameItemsR,values=self.avPulseWidthRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[13] = Spinbox(self.progParamFrameItemsR,values=self.aSensitivityRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[14] = Spinbox(self.progParamFrameItemsR,values=self.vSensitivityRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[15] = Spinbox(self.progParamFrameItemsR,values=self.VRPRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 		
-		self.spinboxParams[16] = Spinbox(self.progParamFrameItemsR,values=self.ARPRange,bd=self.spinboxBD)
-		self.spinboxParams[17] = Spinbox(self.progParamFrameItemsR,values=self.pvarpRange,bd=self.spinboxBD)
-		self.spinboxParams[18] = Spinbox(self.progParamFrameItemsR,values=self.pvarpExtensionRange,bd=self.spinboxBD)
-		self.spinboxParams[19] = Spinbox(self.progParamFrameItemsR,values=self.hysRange,bd=self.spinboxBD)
+		self.spinboxParams[16] = Spinbox(self.progParamFrameItemsR,values=self.ARPRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[17] = Spinbox(self.progParamFrameItemsR,values=self.pvarpRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[18] = Spinbox(self.progParamFrameItemsR,values=self.pvarpExtensionRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[19] = Spinbox(self.progParamFrameItemsR,values=self.hysRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 		
-		self.spinboxParams[20] = Spinbox(self.progParamFrameItemsR,values=self.rateSmoothingRange,bd=self.spinboxBD)
-		self.spinboxParams[21] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationCyclesRange,bd=self.spinboxBD)
-		self.spinboxParams[22] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationLowerRange,bd=self.spinboxBD)
-		self.spinboxParams[23] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationUpperRange,bd=self.spinboxBD)
+		self.spinboxParams[20] = Spinbox(self.progParamFrameItemsR,values=self.rateSmoothingRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[21] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationCyclesRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[22] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationLowerRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[23] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationUpperRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 		
-		self.spinboxParams[24] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackModeRange,bd=self.spinboxBD)
-		self.spinboxParams[25] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackTimeRange,bd=self.spinboxBD)
-		self.spinboxParams[26] = Spinbox(self.progParamFrameItemsR,values=self.ventricularBlankingRange,bd=self.spinboxBD)
-		self.spinboxParams[27] = Spinbox(self.progParamFrameItemsR,values=self.activityThresholdRange,bd=self.spinboxBD)
+		self.spinboxParams[24] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackModeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[25] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackTimeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[26] = Spinbox(self.progParamFrameItemsR,values=self.ventricularBlankingRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[27] = Spinbox(self.progParamFrameItemsR,values=self.activityThresholdRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 
-		self.spinboxParams[28] = Spinbox(self.progParamFrameItemsR,values=self.reactionTimeRange,bd=self.spinboxBD)
-		self.spinboxParams[29] = Spinbox(self.progParamFrameItemsR,values=self.responseFactorRange,bd=self.spinboxBD)
-		self.spinboxParams[30] = Spinbox(self.progParamFrameItemsR,values=self.recoveryTimeRange,bd=self.spinboxBD)
+		self.spinboxParams[28] = Spinbox(self.progParamFrameItemsR,values=self.reactionTimeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[29] = Spinbox(self.progParamFrameItemsR,values=self.responseFactorRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[30] = Spinbox(self.progParamFrameItemsR,values=self.recoveryTimeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 
 		self.but_Off.config(relief='sunken')
 
@@ -684,7 +809,9 @@ class Welcome():
 		# self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 		self.Info1 = Label(self.logInfoFrame, text="Viewing up to 250 actions in order from most recent to oldest: ",bg="grey50",fg="snow")
 		# self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		
+		self.but1_Logout = Button(self.logInfoFrame,text="Logout",state=NORMAL,command=self.__logout,bg="snow",fg="black")
+		# self.but1_Logout.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+
 		#===Middle Text area===#
 		self.logTextFrame = Frame(self.logFrame)
 
@@ -700,8 +827,10 @@ class Welcome():
 		#===Bottom actions bar==#
 		self.logInfoActionsFrame = Frame(self.logFrame)
 		# self.logInfoActionsFrame.pack(side=BOTTOM,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.logReturnButton = Button(self.logInfoActionsFrame,text="Return to Main Screen",state=NORMAL,command=self.__show_Main_Frame,bg="snow",fg="black")
+		self.logReturnButton = Button(self.logInfoActionsFrame,text="Return to Main Screen",state=NORMAL,command=self.__show_Main_Frame,bg="snow",fg="black",font=self.fontButton)
 		# self.logReturnButton.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+
+		self.__welcome_Prompts()
 
 	def __logout(self):
 		self.root.destroy()

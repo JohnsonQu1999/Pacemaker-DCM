@@ -1,8 +1,10 @@
 from tkinter import *
 
+popupLocation = "+150+300"
 
 def promptWindow(title,message):
 	promptScreen = Tk()
+	promptScreen.geometry(popupLocation)
 	promptScreen.title(title)
 
 	Label(promptScreen, text=message).pack()
@@ -10,6 +12,7 @@ def promptWindow(title,message):
 
 def promptWindow2(title,message1,message2):
 	promptScreen = Tk()
+	promptScreen.geometry(popupLocation)
 	promptScreen.title(title)
 
 	Label(promptScreen, text=message1).pack()
@@ -18,6 +21,7 @@ def promptWindow2(title,message1,message2):
 
 def promptWindow3(title,message1,message2,message3):
 	promptScreen = Tk()
+	promptScreen.geometry(popupLocation)
 	promptScreen.title(title)
 
 	Label(promptScreen, text=message1).pack()
@@ -27,6 +31,7 @@ def promptWindow3(title,message1,message2,message3):
 
 def promptWindow4(title,message1,message2,message3,message4):
 	promptScreen = Tk()
+	promptScreen.geometry(popupLocation)
 	promptScreen.title(title)
 
 	Label(promptScreen, text=message1).pack()
@@ -37,6 +42,7 @@ def promptWindow4(title,message1,message2,message3,message4):
 
 def promptWindow5(title,message1,message2,message3,message4,message5):
 	promptScreen = Tk()
+	promptScreen.geometry(popupLocation)
 	promptScreen.title(title)
 
 	Label(promptScreen, text=message1).pack()

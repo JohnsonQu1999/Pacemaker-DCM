@@ -54,6 +54,8 @@ class Parent():
 		# reg = Register()
 		Button(self.login.logframe, text="Register", height="2", width="15", command=self.registerpage).pack()  # command=register
 
+		Button(self.login.logframe,text=" ",height="2",width="55",relief="flat",command=self.__admin).pack()
+
 #_______________Register Buttons_______________#
 
 		Label(self.register.reg, text = "Please Register Below:").pack(side = TOP, fill=Y)
@@ -83,6 +85,9 @@ class Parent():
 		self.register.reg.pack_forget()
 		self.screen.mainloop()
 
+	def __admin(self):
+		self.login.logframe.pack_forget()
+		self.welcome=Welcome(self.screen)
 
 	def loginuser(self):
 		self.getfromfile()

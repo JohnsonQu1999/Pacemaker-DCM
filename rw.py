@@ -151,7 +151,7 @@ class RW():
 		self.__read_Logs()
 
 		if(self.logLines >= self.maxLogLines):
-			print("append_To_Log: more than 100 lines")
+			print("append_To_Log: more than "+str(self.maxLogLines)+" lines")
 			self.__remove_First_Log_Item()
 
 		# print("append_To_Log: appending string: "+str(text))
