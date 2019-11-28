@@ -53,10 +53,10 @@
 from tkinter import*
 from tkinter import font
 from tkinter import messagebox
+# from PIL import Image, ImageTk
 from rw import*
 from promptWindow import*
 from copy import deepcopy
-# from parent import parent
 
 class Welcome():
 	def __init__(self,screen): #Constructor, sets up inital values
@@ -125,6 +125,7 @@ class Welcome():
 		"Atrial Duration Cycles","Atrial Duration Lower Range","Atrial Duration Upper Range","Ventricular Blanking","Atrial Fall Back Time","Activity Threshold",
 		"Reaction Time","Response Factor","Recovery Time"]
 
+		#===Core variable parameters===#
 		self.progParam = []
 		self.progParamTMinus1 = []
 		self.logContents = []
@@ -133,13 +134,16 @@ class Welcome():
 		self.refreshTimeVar = StringVar()
 		self.refreshTime = 0
 
-
+		#===Auxiliary Variable parameters===#
 		self.numParams = 31
 		self.labelParams = [None]*self.numParams
 		self.spinboxParams = [None]*self.numParams
 		self.commsStatus = 1 # 0 means good status
 		self.boardStatus = 1 # 0 means good board
-		
+		self.offsetX = 0
+		self.offsetY = 0
+
+		#===Window Parameters===# - should probably replace with #define
 		self.butFill = BOTH
 		self.butWidth = "10"
 		self.butAnchor = "e"
@@ -150,12 +154,16 @@ class Welcome():
 		self.headingsHeight = 2
 		self.spinboxJustify = "center"
 		self.popupLocation = "+150+300"
+		self.topFrameColour = "cornflower blue"
 
+		#===Fonts===#
 		self.fontHeading = font.Font(family="BebasNeue-Regular",size=18)
 		self.fontButton = font.Font(family="Helvetica Neue",size=11)
 		self.fontLabel = font.Font(family="Helvetica Neue",size=12)
 		self.fontSpinbox = font.Font(family="Helvetica Neue",size=12)
-		self.fontMeta = font.Font(family="Helvetica Neue",size=10)
+		self.fontMeta = font.Font(family="Helvetica Neue",size=14)
+
+
 
 		self.root = screen
 
@@ -381,56 +389,78 @@ class Welcome():
 	def __flashSpinboxParams(self,step=0):
 		if(step == 0):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray9"
+				self.progParamFrameItemsR["bg"] = "gray9"
 				self.spinboxParams[i]["bg"] = "gray9"
 				self.labelParams[i]["bg"] = "gray9"
 			self.root.after(10,self.__flashSpinboxParams,1)
 		elif(step == 1):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray19"
+				self.progParamFrameItemsR["bg"] = "gray19"
 				self.spinboxParams[i]["bg"] = "gray19"
 				self.labelParams[i]["bg"] = "gray19"
 			self.root.after(20,self.__flashSpinboxParams,2)
 		elif(step == 2):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray29"
+				self.progParamFrameItemsR["bg"] = "gray29"
 				self.spinboxParams[i]["bg"] = "gray29"
 				self.labelParams[i]["bg"] = "gray29"
 			self.root.after(30,self.__flashSpinboxParams,3)
 		elif(step == 3):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray39"
+				self.progParamFrameItemsR["bg"] = "gray39"
 				self.spinboxParams[i]["bg"] = "gray39"
 				self.labelParams[i]["bg"] = "gray39"
 			self.root.after(40,self.__flashSpinboxParams,4)
 		elif(step == 4):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray49"
+				self.progParamFrameItemsR["bg"] = "gray49"
 				self.spinboxParams[i]["bg"] = "gray49"
 				self.labelParams[i]["bg"] = "gray49"
 			self.root.after(50,self.__flashSpinboxParams,5)
 		elif(step == 5):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray59"
+				self.progParamFrameItemsR["bg"] = "gray59"
 				self.spinboxParams[i]["bg"] = "gray59"
 				self.labelParams[i]["bg"] = "gray59"
 			self.root.after(60,self.__flashSpinboxParams,6)
 		elif(step == 6):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray69"
+				self.progParamFrameItemsR["bg"] = "gray69"
 				self.spinboxParams[i]["bg"] = "gray69"
 				self.labelParams[i]["bg"] = "gray69"
 			self.root.after(70,self.__flashSpinboxParams,7)
 		elif(step == 7):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray79"
+				self.progParamFrameItemsR["bg"] = "gray79"
 				self.spinboxParams[i]["bg"] = "gray79"
 				self.labelParams[i]["bg"] = "gray79"
 			self.root.after(80,self.__flashSpinboxParams,8)
 		elif(step == 8):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray89"
+				self.progParamFrameItemsR["bg"] = "gray89"
 				self.spinboxParams[i]["bg"] = "gray89"
 				self.labelParams[i]["bg"] = "gray89"
 			self.root.after(90,self.__flashSpinboxParams,9)
 		elif(step == 9):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "gray99"
+				self.progParamFrameItemsR["bg"] = "gray99"
 				self.spinboxParams[i]["bg"] = "gray99"
 				self.labelParams[i]["bg"] = "gray99"
 			self.root.after(100,self.__flashSpinboxParams,10)
 		elif(step == 10):
 			for i in range(31):
+				self.progParamFrameItemsL["bg"] = "snow"
+				self.progParamFrameItemsR["bg"] = "snow"
 				self.spinboxParams[i]["bg"] = "snow"
 				self.labelParams[i]["bg"] = "snow"
 			self.root.after(110,self.__flashSpinboxParams,11)
@@ -615,7 +645,24 @@ class Welcome():
 		else:
 			self.__show_MODE(mode)
 
+	def dragWindow(self,event):
+	    x = self.root.winfo_pointerx() - self.offsetX
+	    y = self.root.winfo_pointery() - self.offsetY
+	    self.root.geometry('+{x}+{y}'.format(x=x,y=y))
+
+	def clickWindow(self,event):
+	    self.offsetX = event.x
+	    self.offsetY = event.y
+
 	def __create_Welcome_Window(self): # Creates the main GUI using .pack()
+		#==Remove title bar===#
+		self.root.overrideredirect(True)
+		
+		#===Implement draggability===#
+		self.root.bind('<Button-1>',self.clickWindow)
+		self.root.bind('<B1-Motion>',self.dragWindow)
+		
+		#===Frame Setup===#
 		self.root.title("Digital Communications Module")
 		self.root.geometry("850x600+100+100")
 		
@@ -627,22 +674,28 @@ class Welcome():
 		self.mainFrame = Frame(self.root)
 		self.mainFrame.pack(side=TOP,fill=BOTH,expand=True)
 
-		#===Top Status bar + Logout===#
-		self.metaDataFrame = Frame(self.mainFrame,bg="grey50",bd=4)
+		#===Top Status bar + Logout + Exit + Icon===#
+		self.metaDataFrame = Frame(self.mainFrame,bg=self.topFrameColour,bd=4)
 		self.metaDataFrame.pack(side = TOP,fill=X,expand=False)
 		
-		self.Ind11 = Label(self.metaDataFrame, text="Communication Status: ",bg="grey50",fg="snow",font=self.fontMeta)
+		# load = Image.open("Pacemaker_512.png")
+		# pAce_Of_Hearts_Icon = ImageTk.PhotoImage(Image.open("Pacemaker_512.png"))
+		# self.icon = Canvas(self.metaDataFrame, image = pAce_Of_Hearts_Icon)
+		# self.icon.pack(side=LEFT)
+		self.Ind11 = Label(self.metaDataFrame, text="Communication Status: ",bg=self.topFrameColour,fg="snow",font=self.fontMeta)
 		self.Ind11.pack(side=LEFT)
-		self.Ind12 = Label(self.metaDataFrame, textvariable=self.commsStatusInd,bg="grey50",fg="snow",font=self.fontMeta)
+		self.Ind12 = Label(self.metaDataFrame, textvariable=self.commsStatusInd,bg=self.topFrameColour,fg="snow",font=self.fontMeta)
 		self.Ind12.pack(side = LEFT)
-		self.Ind21 = Label(self.metaDataFrame, text="   Board Status: ",bg="grey50",fg="snow",font=self.fontMeta)
+		self.Ind21 = Label(self.metaDataFrame, text="   Board Status: ",bg=self.topFrameColour,fg="snow",font=self.fontMeta)
 		self.Ind21.pack(side=LEFT)
-		self.Ind22 = Label(self.metaDataFrame, textvariable=self.boardStatusInd,bg="grey50",fg="snow",font=self.fontMeta)
+		self.Ind22 = Label(self.metaDataFrame, textvariable=self.boardStatusInd,bg=self.topFrameColour,fg="snow",font=self.fontMeta)
 		self.Ind22.pack(side = LEFT)
-		self.UpdateIndicatorLabel = Label(self.metaDataFrame,text="   Refreshing in: ",bg="grey50",fg="snow",font=self.fontMeta)
+		self.UpdateIndicatorLabel = Label(self.metaDataFrame,text="   Refreshing in: ",bg=self.topFrameColour,fg="snow",font=self.fontMeta)
 		self.UpdateIndicatorLabel.pack(side=LEFT)
-		self.UpdateIndicatorVar = Label(self.metaDataFrame,textvariable=self.refreshTimeVar,bg="grey50",fg="snow",font=self.fontMeta)
+		self.UpdateIndicatorVar = Label(self.metaDataFrame,textvariable=self.refreshTimeVar,bg=self.topFrameColour,fg="snow",font=self.fontMeta)
 		self.UpdateIndicatorVar.pack(side=LEFT)
+		self.but_Exit = Button(self.metaDataFrame,text="Exit",state=NORMAL,command=self.__exit,bg="snow",fg="black",font=self.fontButton)
+		self.but_Exit.pack(side=RIGHT)
 		self.but_Logout = Button(self.metaDataFrame,text="Logout",state=NORMAL,command=self.__logout,bg="snow",fg="black",font=self.fontButton)
 		self.but_Logout.pack(side=RIGHT)
 
@@ -836,3 +889,6 @@ class Welcome():
 		self.root.destroy()
 		from parent import Parent
 		Parent()
+
+	def __exit(self):
+		self.root.destroy()
