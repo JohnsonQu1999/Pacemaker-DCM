@@ -1,0 +1,7 @@
+Problem: Error when using PIL
+Reason: Old PIL version
+Solution: conda uninstall PILLOW; conda install PILLOW
+
+Problem:  Error when using PIL (AttributeError: type object 'Image' has no attribute 'open'"
+Reason: Some sort of package conflict. When from promptWindow import* isn't called, the package works fine. When you instead call from promptWindow import promptWindow5, it works okay. The only package that promptWindow calls is tkinter, which is already called in Welcome.
+Solution: replace <from promptWindow import*> with <from promptWindow import promptWindow5>

@@ -1,7 +1,6 @@
+from Welcome import *
 from login import *
 from register import *
-from Welcome import *
-
 
 #import all files
 class Begin():

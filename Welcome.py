@@ -30,6 +30,9 @@
   # Prompt 'Do you want to save' when you change modes without saving										COMPLETED
   # Prompt 'Do you want to save' before saving (in case of a misclick)										COMPLETED
   # Logout button 																							COMPLETED
+    # Prompt 'Are you sure?'																				COMPLETED
+  # Exit button																								COMPLETED
+    # Prompt 'Are you sure?'																				COMPLETED
   # Include units for all parameters 																		COMPLETED
   # Create more descriptive error messages																	COMPLETED
     # Having some issues in __check_In_Range function. Come back to this.									COMPLETED
@@ -52,10 +55,8 @@
 #===IMPORT===#
 from tkinter import*
 from tkinter import font
-from tkinter import messagebox
-# from PIL import Image, ImageTk
 from rw import*
-from promptWindow import*
+from promptWindow import promptWindow5
 from copy import deepcopy
 
 class Welcome():
@@ -155,6 +156,9 @@ class Welcome():
 		self.spinboxJustify = "center"
 		self.popupLocation = "+150+300"
 		self.topFrameColour = "cornflower blue"
+		self.textColourLight = "ghost white"
+		self.buttonTextColour = "black"
+		self.backGroundColour = "ghost white"
 
 		#===Fonts===#
 		self.fontHeading = font.Font(family="BebasNeue-Regular",size=18)
@@ -162,8 +166,7 @@ class Welcome():
 		self.fontLabel = font.Font(family="Helvetica Neue",size=12)
 		self.fontSpinbox = font.Font(family="Helvetica Neue",size=12)
 		self.fontMeta = font.Font(family="Helvetica Neue",size=14)
-
-
+		self.fontText = font.Font(family="Helvetica Neue",size=12)
 
 		self.root = screen
 
@@ -192,38 +195,15 @@ class Welcome():
 	def __start_Status_Check_Loop(self,secondsToCheck): # Runs repeatedly to check the comms and board status by using the .after() function
 		self.refreshTimeVar.set(str(secondsToCheck))
 
-		# print(".__start_Status_Check_Loop")
-
 		if(secondsToCheck <= 0):
 			self.__set_Meta_Status()
-			print("Check")
 			secondsToCheck = 10
 		else:
 			secondsToCheck = secondsToCheck-1
 
-		# print(self.refreshTimeVar.get())
-
 		self.root.after(1000,self.__start_Status_Check_Loop,secondsToCheck)
 
-	def __set_Mode_Param(self): # Method to tell the pacemaker what mode we want to run, and with what parameters
-		progParamParsed = self.progParam # Parsed parameter array
-
-		index = 0
-
-		for param in self.modeDict[self.mode]: # Parsing the parameter array to remove all 'NA's
-			if(param == 1):
-				progParamParsed.append(self.progParam[index])
-
-		# serial = Serial() # Instantiating a serial object
-
-		# if(serial.upload_Parameters(self.mode,progParamParsed) == 0): # Writing to the board, feedback depending on return value
-		# 	print("success")
-		# else:
-		# 	print("failure")
-
-	def __get_Mode_Param(self):
-		progParamUnParsed = []
-
+	def __get_User_Data_Pacemaker(self): # Gets programmable parameters from pacemaker
 		# serial = Serial()
 
 		# progParamUnParsed = serial.download_Parameters(self.mode)
@@ -243,6 +223,22 @@ class Welcome():
 			else:
 				self.progParam.append("NA")
 				indexParsed+=1
+
+	def __set_User_Data_Pacemaker(self): # Sets programmable parameters to pacemaker
+		progParamParsed = self.progParam # Parsed parameter array
+
+		index = 0
+
+		for param in self.modeDict[self.mode]: # Parsing the parameter array to remove all 'NA's
+			if(param == 1):
+				progParamParsed.append(self.progParam[index])
+
+		# serial = Serial() # Instantiating a serial object
+
+		# if(serial.upload_Parameters(self.mode,progParamParsed) == 0): # Writing to the board, feedback depending on return value
+		# 	print("success")
+		# else:
+		# 	print("failure")
 
 	def __get_User_Data(self): # Gets programmable parameters from rw class
 		file=RW()
@@ -343,28 +339,21 @@ class Welcome():
 				print("check int for "+self.parameterNamesParam[index])
 				try:
 					if((int(self.spinboxParams[index].get()) in self.rangesParam[index]) == 0):
-						# print("1Data out of Range"+"Entered value of "+self.spinboxParams[index].get()+" not in allowed range of "+self.rangesParam[index]+"!")
-						# messagebox.showerror("Out of range! Possible values below.",self.rangesParam[index])
 						promptWindow5("Data out of Range","Entered value:",self.parameterNamesParam[index],self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
 						return 1
 				except:
 					print("check float for "+self.parameterNamesParam[index])
 					try:
 						if((float(self.spinboxParams[index].get()) in self.rangesParam[index]) == 0):
-							# print("2Data out of Range"+"Entered value of "+self.spinboxParams[index].get()+" not in allowed range of "+self.rangesParam[index]+"!")
-							# messagebox.showerror("Out of range! Possible values below.",self.rangesParam[index])
 							promptWindow5("Data out of Range","Entered value:",self.parameterNamesParam[index],self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
 							return 1
 					except:
 						print("check string for "+self.parameterNamesParam[index])
 						try:
 							if((self.spinboxParams[index].get() in self.rangesParam[index]) == 0):
-								# print("3Data out of Range"+"Entered value of "+self.spinboxParams[index].get()+" not in allowed range of "+self.rangesParam[index]+"!")
-								# messagebox.showerror("Out of range! Possible values below.",self.rangesParam[index])
 								promptWindow5("Data out of Range","Entered values:",self.parameterNamesParam[index],self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
 								return 1
 						except:
-							# messagebox.showerror("Out of range! Possible values below.",self.rangesParam[index])
 							promptWindow5("Data out of Range","Entered value:",self.parameterNamesParam[index],self.spinboxParams[index].get(),"Allowed values:",self.rangesParam[index])
 							return 1
 			index+=1
@@ -459,10 +448,10 @@ class Welcome():
 			self.root.after(100,self.__flashSpinboxParams,10)
 		elif(step == 10):
 			for i in range(31):
-				self.progParamFrameItemsL["bg"] = "snow"
-				self.progParamFrameItemsR["bg"] = "snow"
-				self.spinboxParams[i]["bg"] = "snow"
-				self.labelParams[i]["bg"] = "snow"
+				self.progParamFrameItemsL["bg"] = self.backGroundColour
+				self.progParamFrameItemsR["bg"] = self.backGroundColour
+				self.spinboxParams[i]["bg"] = self.backGroundColour
+				self.labelParams[i]["bg"] = self.backGroundColour
 			self.root.after(110,self.__flashSpinboxParams,11)
 		return
 
@@ -487,11 +476,11 @@ class Welcome():
 	def __show_Log(self):
 		self.mainFrame.pack_forget()
 		self.logFrame.pack(side=TOP,fill=BOTH,expand=True)
-		self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.logTextFrame.pack(side=TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.logFrameScrollbar.pack(side=RIGHT,fill=Y,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.but1_Logout.pack(side=RIGHT)
+		# self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		# self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		# self.logTextFrame.pack(side=TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		# self.logFrameScrollbar.pack(side=RIGHT,fill=Y,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		# self.but1_Logout.pack(side=RIGHT)
 
 		logs = RW()
 		self.logContents = logs.get_Logs()
@@ -511,8 +500,8 @@ class Welcome():
 		#===Need to run this to prevent user edits===#
 		self.logText.config(state=DISABLED)
 
-		self.logInfoActionsFrame.pack(side=BOTTOM,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.logReturnButton.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		# self.logInfoActionsFrame.pack(side=BOTTOM,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		# self.logReturnButton.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 	
 	def __show_Main_Frame(self):
 		self.logFrame.pack_forget()
@@ -645,22 +634,80 @@ class Welcome():
 		else:
 			self.__show_MODE(mode)
 
-	def dragWindow(self,event):
-	    x = self.root.winfo_pointerx() - self.offsetX
-	    y = self.root.winfo_pointery() - self.offsetY
+	def __dragWindow(self,event):
+	    x = self.metaDataFrame.winfo_pointerx() - self.offsetX
+	    y = self.metaDataFrame.winfo_pointery() - self.offsetY
 	    self.root.geometry('+{x}+{y}'.format(x=x,y=y))
 
-	def clickWindow(self,event):
+	def __clickWindow(self,event):
 	    self.offsetX = event.x
 	    self.offsetY = event.y
 
+	def __logout(self):
+		if(self.__check_If_Same() == 1):
+			# Confirm w/ user
+			confirm = Tk()
+			confirm.geometry(self.popupLocation)
+			confirm.title("Logout?")
+
+			def __confirmed(window):
+				window.destroy()
+				self.root.destroy()
+				from parent import Parent
+				Parent()
+
+			Label(confirm,text="There are unsaved changes. Are you sure you want to logout?").pack()
+			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack(fill=X)
+			Button(confirm,text="No",command=confirm.destroy).pack(fill=X)
+		else:
+			confirm = Tk()
+			confirm.geometry(self.popupLocation)
+			confirm.title("Are you sure you want to logout?")
+
+			def __confirmed(window):
+				window.destroy()
+				self.root.destroy()
+				from parent import Parent
+				Parent()
+
+			Label(confirm,text="Are you sure you want to logout?").pack()
+			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack(fill=X)
+			Button(confirm,text="No",command=confirm.destroy).pack(fill=X)
+
+	def __exit(self):
+		if(self.__check_If_Same() == 1):
+			# Confirm w/ user
+			confirm = Tk()
+			confirm.geometry(self.popupLocation)
+			confirm.title("Exit?")
+
+			def __confirmed(window):
+				window.destroy()
+				self.root.destroy()
+
+			Label(confirm,text="There are unsaved changes. Are you sure you want to exit?").pack()
+			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack(fill=X)
+			Button(confirm,text="No",command=confirm.destroy).pack(fill=X)
+		else:
+			confirm = Tk()
+			confirm.geometry(self.popupLocation)
+			confirm.title("Are you sure you want to exit?")
+
+			def __confirmed(window):
+				window.destroy()
+				self.root.destroy()
+
+			Label(confirm,text="Are you sure you want to exit?").pack()
+			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack(fill=X)
+			Button(confirm,text="No",command=confirm.destroy).pack(fill=X)
+
 	def __create_Welcome_Window(self): # Creates the main GUI using .pack()
-		#==Remove title bar===#
-		self.root.overrideredirect(True)
+		# #==Remove title bar===#
+		# self.root.overrideredirect(True)
 		
-		#===Implement draggability===#
-		self.root.bind('<Button-1>',self.clickWindow)
-		self.root.bind('<B1-Motion>',self.dragWindow)
+		# #===Implement draggability===#
+		# self.root.bind('<Button-1>',self.__clickWindow)
+		# self.root.bind('<B1-Motion>',self.__dragWindow)
 		
 		#===Frame Setup===#
 		self.root.title("Digital Communications Module")
@@ -678,25 +725,21 @@ class Welcome():
 		self.metaDataFrame = Frame(self.mainFrame,bg=self.topFrameColour,bd=4)
 		self.metaDataFrame.pack(side = TOP,fill=X,expand=False)
 		
-		# load = Image.open("Pacemaker_512.png")
-		# pAce_Of_Hearts_Icon = ImageTk.PhotoImage(Image.open("Pacemaker_512.png"))
-		# self.icon = Canvas(self.metaDataFrame, image = pAce_Of_Hearts_Icon)
-		# self.icon.pack(side=LEFT)
-		self.Ind11 = Label(self.metaDataFrame, text="Communication Status: ",bg=self.topFrameColour,fg="snow",font=self.fontMeta)
+		self.Ind11 = Label(self.metaDataFrame, text="Communication Status: ",bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
 		self.Ind11.pack(side=LEFT)
-		self.Ind12 = Label(self.metaDataFrame, textvariable=self.commsStatusInd,bg=self.topFrameColour,fg="snow",font=self.fontMeta)
+		self.Ind12 = Label(self.metaDataFrame, textvariable=self.commsStatusInd,bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
 		self.Ind12.pack(side = LEFT)
-		self.Ind21 = Label(self.metaDataFrame, text="   Board Status: ",bg=self.topFrameColour,fg="snow",font=self.fontMeta)
+		self.Ind21 = Label(self.metaDataFrame, text="   Board Status: ",bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
 		self.Ind21.pack(side=LEFT)
-		self.Ind22 = Label(self.metaDataFrame, textvariable=self.boardStatusInd,bg=self.topFrameColour,fg="snow",font=self.fontMeta)
+		self.Ind22 = Label(self.metaDataFrame, textvariable=self.boardStatusInd,bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
 		self.Ind22.pack(side = LEFT)
-		self.UpdateIndicatorLabel = Label(self.metaDataFrame,text="   Refreshing in: ",bg=self.topFrameColour,fg="snow",font=self.fontMeta)
+		self.UpdateIndicatorLabel = Label(self.metaDataFrame,text="   Refreshing in: ",bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
 		self.UpdateIndicatorLabel.pack(side=LEFT)
-		self.UpdateIndicatorVar = Label(self.metaDataFrame,textvariable=self.refreshTimeVar,bg=self.topFrameColour,fg="snow",font=self.fontMeta)
+		self.UpdateIndicatorVar = Label(self.metaDataFrame,textvariable=self.refreshTimeVar,bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
 		self.UpdateIndicatorVar.pack(side=LEFT)
-		self.but_Exit = Button(self.metaDataFrame,text="Exit",state=NORMAL,command=self.__exit,bg="snow",fg="black",font=self.fontButton)
+		self.but_Exit = Button(self.metaDataFrame,text="Exit",state=NORMAL,command=self.__exit,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but_Exit.pack(side=RIGHT)
-		self.but_Logout = Button(self.metaDataFrame,text="Logout",state=NORMAL,command=self.__logout,bg="snow",fg="black",font=self.fontButton)
+		self.but_Logout = Button(self.metaDataFrame,text="Logout",state=NORMAL,command=self.__logout,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but_Logout.pack(side=RIGHT)
 
 		#===Bottom frames===#
@@ -704,32 +747,32 @@ class Welcome():
 		self.otherFrame.pack(side = BOTTOM,fill=BOTH,expand=True)
 
 		#===Pacing mode selection explorer===#
-		self.pacingModesFrame = Frame(self.otherFrame,bg="snow")
+		self.pacingModesFrame = Frame(self.otherFrame,bg=self.backGroundColour)
 		self.pacingModesFrame.pack(side = LEFT,fill=Y,expand=False)
 
-		self.pacingModesLabel = Label(self.pacingModesFrame,text="Select a Pacing Mode",justify=LEFT,width="20",height=self.headingsHeight,bg="snow",fg="black",font=self.fontHeading)
+		self.pacingModesLabel = Label(self.pacingModesFrame,text="Select a Pacing Mode",justify=LEFT,width="20",height=self.headingsHeight,bg=self.backGroundColour,fg="black",font=self.fontHeading)
 		self.pacingModesLabel.pack(side=TOP)
-		self.but_Off = Button(self.pacingModesFrame,text="Off",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("Off"))
+		self.but_Off = Button(self.pacingModesFrame,text="Off",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("Off"))
 		self.but_Off.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_AOO = Button(self.pacingModesFrame,text="AOO",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AOO"))
+		self.but_AOO = Button(self.pacingModesFrame,text="AOO",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AOO"))
 		self.but_AOO.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_VOO = Button(self.pacingModesFrame,text="VOO",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VOO"))
+		self.but_VOO = Button(self.pacingModesFrame,text="VOO",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VOO"))
 		self.but_VOO.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_AAI = Button(self.pacingModesFrame,text="AAI",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AAI"))
+		self.but_AAI = Button(self.pacingModesFrame,text="AAI",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AAI"))
 		self.but_AAI.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_VVI = Button(self.pacingModesFrame,text="VVI",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VVI"))
+		self.but_VVI = Button(self.pacingModesFrame,text="VVI",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VVI"))
 		self.but_VVI.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_DOO = Button(self.pacingModesFrame,text="DOO",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("DOO"))
+		self.but_DOO = Button(self.pacingModesFrame,text="DOO",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("DOO"))
 		self.but_DOO.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_AOOR = Button(self.pacingModesFrame,text="AOOR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AOOR"))
+		self.but_AOOR = Button(self.pacingModesFrame,text="AOOR",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AOOR"))
 		self.but_AOOR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_AAIR = Button(self.pacingModesFrame,text="AAIR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AAIR"))
+		self.but_AAIR = Button(self.pacingModesFrame,text="AAIR",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("AAIR"))
 		self.but_AAIR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_VOOR = Button(self.pacingModesFrame,text="VOOR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VOOR"))
+		self.but_VOOR = Button(self.pacingModesFrame,text="VOOR",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VOOR"))
 		self.but_VOOR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_VVIR = Button(self.pacingModesFrame,text="VVIR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VVIR"))
+		self.but_VVIR = Button(self.pacingModesFrame,text="VVIR",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("VVIR"))
 		self.but_VVIR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
-		self.but_DOOR = Button(self.pacingModesFrame,text="DOOR",bg="snow",fg="black",width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("DOOR"))
+		self.but_DOOR = Button(self.pacingModesFrame,text="DOOR",bg=self.backGroundColour,fg=self.buttonTextColour,width=self.butWidth,font=self.fontButton,command=lambda:self.__edit_MODE("DOOR"))
 		self.but_DOOR.pack(side=TOP,fill=self.butFill,anchor=self.butAnchor)
 
 		#===Parameter explorer===#
@@ -737,9 +780,9 @@ class Welcome():
 		self.progParamFrame.pack(side = RIGHT,fill=BOTH,expand=True)
 
 		#===Description===#
-		self.progParamFrameTop = Frame(self.progParamFrame,bg="snow")
+		self.progParamFrameTop = Frame(self.progParamFrame,bg=self.backGroundColour)
 		self.progParamFrameTop.pack(side=TOP,fill=X,expand=False)
-		self.progParamFrameLabel = Label(self.progParamFrameTop,text="Edit Parameters",justify=LEFT,height=self.headingsHeight,bg="snow",fg="black",font=self.fontHeading)
+		self.progParamFrameLabel = Label(self.progParamFrameTop,text="Edit Parameters",justify=LEFT,height=self.headingsHeight,bg=self.backGroundColour,fg="black",font=self.fontHeading)
 		self.progParamFrameLabel.pack()
 
 		#===Parameter explorer top side padding===#
@@ -749,68 +792,67 @@ class Welcome():
 		#===Parameter explorer left side padding===#
 		self.progParamFrameLeftPadding1 = Frame(self.progParamFrame,bg="gainsboro",width=self.paddingWidthVert)
 		self.progParamFrameLeftPadding1.pack(side=LEFT,fill=Y,expand=False)
-		self.progParamFrameLeftPadding2 = Frame(self.progParamFrame,bg="snow",width="50")
+		self.progParamFrameLeftPadding2 = Frame(self.progParamFrame,bg=self.backGroundColour,width="50")
 		self.progParamFrameLeftPadding2.pack(side=LEFT,fill=Y,expand=False)
 
 		#===View Log Action===#
-		self.progParamFrameLogActions = Frame(self.progParamFrame,bg="snow")
+		self.progParamFrameLogActions = Frame(self.progParamFrame,bg=self.backGroundColour)
 		self.progParamFrameLogActions.pack(side=BOTTOM,fill=X,expand=False)
-		self.but_ViewLog = Button(self.progParamFrameLogActions,text="View past Actions (Log)",state=DISABLED,command=self.__show_Log,bg="snow",fg="black",font=self.fontButton)
+		self.but_ViewLog = Button(self.progParamFrameLogActions,text="View past Actions (Log)",state=NORMAL,command=self.__show_Log,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but_ViewLog.pack(side=RIGHT)
 
 		#===Save & Reset Actions===#
-		self.progParamFrameActions = Frame(self.progParamFrame,bg="snow")
+		self.progParamFrameActions = Frame(self.progParamFrame,bg=self.backGroundColour)
 		self.progParamFrameActions.pack(side=BOTTOM,fill=X,expand=False)
-		self.but_Reset = Button(self.progParamFrameActions,text="Reset parameters to nominal",state=DISABLED,command=self.__confirm_Reset_Default_Values,bg="snow",fg="black",font=self.fontButton)
+		self.but_Reset = Button(self.progParamFrameActions,text="Reset parameters to nominal",state=NORMAL,command=self.__confirm_Reset_Default_Values,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but_Reset.pack(side=RIGHT)
-		self.but_Save = Button(self.progParamFrameActions,text="Save parameters and Run current mode",state=DISABLED,command=self.__save_Param,bg="snow",fg="black",font=self.fontButton)
+		self.but_Save = Button(self.progParamFrameActions,text="Save parameters and Run current mode",state=NORMAL,command=self.__save_Param,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but_Save.pack(side=RIGHT)
 
-
 		#===Parameter labels===#
-		self.progParamFrameItemsL = Frame(self.progParamFrame,bg="snow")
+		self.progParamFrameItemsL = Frame(self.progParamFrame,bg=self.backGroundColour)
 		self.progParamFrameItemsL.pack(side=LEFT,fill=Y,expand=False)
-		self.labelParams[0] = Label(self.progParamFrameItemsL,text="Lower Rate Limit (ppm): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[1] = Label(self.progParamFrameItemsL,text="Upper Rate Limit (ppm): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[2] = Label(self.progParamFrameItemsL,text="Maximum Sensor Rate (ppm): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[3] = Label(self.progParamFrameItemsL,text="Fixed AV Delay (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[0] = Label(self.progParamFrameItemsL,text="Lower Rate Limit (ppm): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[1] = Label(self.progParamFrameItemsL,text="Upper Rate Limit (ppm): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[2] = Label(self.progParamFrameItemsL,text="Maximum Sensor Rate (ppm): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[3] = Label(self.progParamFrameItemsL,text="Fixed AV Delay (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[4] = Label(self.progParamFrameItemsL,text="Dynamic AV Delay (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[5] = Label(self.progParamFrameItemsL,text="Minimum Dynamic AV Delay (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[6] = Label(self.progParamFrameItemsL,text="Sensed AV Delay Offset (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[7] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Reg. (V): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[4] = Label(self.progParamFrameItemsL,text="Dynamic AV Delay (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[5] = Label(self.progParamFrameItemsL,text="Minimum Dynamic AV Delay (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[6] = Label(self.progParamFrameItemsL,text="Sensed AV Delay Offset (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[7] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Reg. (V): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[8] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Reg. (V): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[9] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Unreg. (V): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[10] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Unreg. (V): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[11] = Label(self.progParamFrameItemsL,text="Atrial Pulse Width (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[8] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Reg. (V): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[9] = Label(self.progParamFrameItemsL,text="Atrial Pulse Amplitude Unreg. (V): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[10] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Amplitude Unreg. (V): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[11] = Label(self.progParamFrameItemsL,text="Atrial Pulse Width (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[12] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Width (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[13] = Label(self.progParamFrameItemsL,text="Atrial Sensitivity (mV): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[14] = Label(self.progParamFrameItemsL,text="Ventricular Sensitivity (mV): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[15] = Label(self.progParamFrameItemsL,text="Venrticular Refractory Period (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[12] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Width (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[13] = Label(self.progParamFrameItemsL,text="Atrial Sensitivity (mV): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[14] = Label(self.progParamFrameItemsL,text="Ventricular Sensitivity (mV): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[15] = Label(self.progParamFrameItemsL,text="Venrticular Refractory Period (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[16] = Label(self.progParamFrameItemsL,text="Atrial Refractory Period (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[17] = Label(self.progParamFrameItemsL,text="PVARP (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[18] = Label(self.progParamFrameItemsL,text="PVARP Extension (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[19] = Label(self.progParamFrameItemsL,text="Hysteresis (ppm): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[16] = Label(self.progParamFrameItemsL,text="Atrial Refractory Period (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[17] = Label(self.progParamFrameItemsL,text="PVARP (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[18] = Label(self.progParamFrameItemsL,text="PVARP Extension (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[19] = Label(self.progParamFrameItemsL,text="Hysteresis (ppm): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[20] = Label(self.progParamFrameItemsL,text="Rate Smoothing (%): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[21] = Label(self.progParamFrameItemsL,text="ATR Duration Cycles (N/A): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[22] = Label(self.progParamFrameItemsL,text="ATR Duration Lower Range: ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[23] = Label(self.progParamFrameItemsL,text="ATR Duration Upper Range: ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[20] = Label(self.progParamFrameItemsL,text="Rate Smoothing (%): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[21] = Label(self.progParamFrameItemsL,text="ATR Duration Cycles (N/A): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[22] = Label(self.progParamFrameItemsL,text="ATR Duration Lower Range: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[23] = Label(self.progParamFrameItemsL,text="ATR Duration Upper Range: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[24] = Label(self.progParamFrameItemsL,text="ATR Mode: ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[25] = Label(self.progParamFrameItemsL,text="ATR Fallback Time (min): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[26] = Label(self.progParamFrameItemsL,text="Ventricular Blanking (ms): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[27] = Label(self.progParamFrameItemsL,text="Activity Threshold: ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[24] = Label(self.progParamFrameItemsL,text="ATR Mode: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[25] = Label(self.progParamFrameItemsL,text="ATR Fallback Time (min): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[26] = Label(self.progParamFrameItemsL,text="Ventricular Blanking (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[27] = Label(self.progParamFrameItemsL,text="Activity Threshold: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[28] = Label(self.progParamFrameItemsL,text="Reaction Time (s): ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[29] = Label(self.progParamFrameItemsL,text="Response Factor: ",justify=LEFT,bg="snow",font=self.fontLabel)
-		self.labelParams[30] = Label(self.progParamFrameItemsL,text="Recovery Time (min): ",justify=LEFT,bg="snow",font=self.fontLabel)
+		self.labelParams[28] = Label(self.progParamFrameItemsL,text="Reaction Time (s): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[29] = Label(self.progParamFrameItemsL,text="Response Factor: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[30] = Label(self.progParamFrameItemsL,text="Recovery Time (min): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 
 		#===Parameter Spinboxes===#
-		self.progParamFrameItemsR = Frame(self.progParamFrame,bg="snow")
+		self.progParamFrameItemsR = Frame(self.progParamFrame,bg=self.backGroundColour)
 		self.progParamFrameItemsR.pack(side=LEFT,fill=BOTH,expand=True)
 		self.spinboxParams[0] = Spinbox(self.progParamFrameItemsR,values=self.lowerRateLimitRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 		self.spinboxParams[1] = Spinbox(self.progParamFrameItemsR,values=self.upperRateLimitRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
@@ -854,41 +896,37 @@ class Welcome():
 		self.but_Off.config(relief='sunken')
 
 		#===Log Frame Setup===#
-		self.logFrame = Frame(self.root)
-		# self.logFrame.pack(side=TOP,fill=BOTH,expand=True) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logFrame = Frame(self.root,bg=self.backGroundColour)
+		self.logFrame.pack(side=TOP,fill=BOTH,expand=True) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 		
 		#===Top info bar===#
-		self.logInfoFrame = Frame(self.logFrame,bg="grey50",bd=4)
-		# self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.Info1 = Label(self.logInfoFrame, text="Viewing up to 250 actions in order from most recent to oldest: ",bg="grey50",fg="snow",font=self.fontMeta)
-		# self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.but1_Logout = Button(self.logInfoFrame,text="Logout",state=NORMAL,command=self.__logout,bg="snow",fg="black",font=self.fontButton)
-		# self.but1_Logout.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logInfoFrame = Frame(self.logFrame,bg=self.topFrameColour,bd=4)
+		self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.Info1 = Label(self.logInfoFrame, text="Viewing up to 250 actions in order from most recent to oldest: ",bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
+		self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.but1_Exit = Button(self.logInfoFrame,text="Exit",state=NORMAL,command=self.__exit,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
+		self.but1_Exit.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.but1_Logout = Button(self.logInfoFrame,text="Logout",state=NORMAL,command=self.__logout,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
+		self.but1_Logout.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 
 		#===Middle Text area===#
-		self.logTextFrame = Frame(self.logFrame)
+		self.logTextFrame = Frame(self.logFrame,bg=self.backGroundColour)
+		self.logTextFrame.pack(side=TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 
-		self.logText = Text(self.logTextFrame)
+		self.logText = Text(self.logTextFrame,font=self.fontText,bg=self.backGroundColour)
 		# self.logText.pack() # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 
-		# self.logTextFrame.pack(side=TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 		self.logFrameScrollbar = Scrollbar(self.logTextFrame,command=self.logText.yview)
-		# self.logFrameScrollbar.pack(side=RIGHT,fill=Y,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logFrameScrollbar.pack(side=RIGHT,fill=Y,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 
 		self.logText['yscrollcommand'] = self.logFrameScrollbar.set
 
 		#===Bottom actions bar==#
-		self.logInfoActionsFrame = Frame(self.logFrame)
-		# self.logInfoActionsFrame.pack(side=BOTTOM,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.logReturnButton = Button(self.logInfoActionsFrame,text="Return to Main Screen",state=NORMAL,command=self.__show_Main_Frame,bg="snow",fg="black",font=self.fontButton)
-		# self.logReturnButton.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logInfoActionsFrame = Frame(self.logFrame,bg=self.backGroundColour)
+		self.logInfoActionsFrame.pack(side=BOTTOM,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logReturnButton = Button(self.logInfoActionsFrame,text="Return to Main Screen",state=NORMAL,command=self.__show_Main_Frame,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
+		self.logReturnButton.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+
+		self.logFrame.pack_forget()
 
 		self.__welcome_Prompts()
-
-	def __logout(self):
-		self.root.destroy()
-		from parent import Parent
-		Parent()
-
-	def __exit(self):
-		self.root.destroy()

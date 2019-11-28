@@ -1,10 +1,6 @@
 from tkinter import *
-from tkinter import font
 
 popupLocation = "+150+300"
-# fontHeading1 = font.Font(family="BebasNeue-Regular",size=14)
-# fontHeading2 = font.Font(family="BebasNeue-Regular",size=12)
-# fontLabel = font.Font(family="Helvetica Neue",size=12)
 
 def promptWindow(title,message):
 	promptScreen = Tk()
