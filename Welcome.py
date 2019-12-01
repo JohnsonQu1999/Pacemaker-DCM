@@ -211,8 +211,10 @@ class Welcome():
 
 	def __get_Comms_Status(self): # Gets comms status. Currently psuedo code - will call upon an external class in the future
 		if(self.commsStatus==0):
+			self.commsStatus=1
 			return "GOOD"
 		else:
+			self.commsStatus=0
 			return "BAD"
 
 		# serial = Serial()
@@ -220,8 +222,10 @@ class Welcome():
 
 	def __get_Board_Status(self): # Gets board status. Currently psuedo code - will call upon an external class in the future
 		if(self.boardStatus==0):
+			self.boardStatus=1
 			return "GOOD"
 		else:
+			self.boardStatus=0
 			return "BAD"
 
 		# serial = Serial()
