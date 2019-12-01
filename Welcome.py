@@ -39,7 +39,9 @@
     # If you save a value, it should be obvious that it was saved 											COMPLETED
   # Show past 2 actions (save/reset)																		COMPLETED
     # Maybe have a window at the bottom, or have a 'log' file that saves all past actions 					COMPLETED
-  # Remove A/V sensitivity for relevant modes (not using)													COMPLETED
+  # Properly end the .after() that checks comms, so there's no error when logging out 						COMPLETED
+  # Indicate which mode is running on the DCM 																COMPLETED
+# Make things compatible with the board 																	COMPLETED
   # Remove Unreg. Voltage for A/V (only need one)															COMPLETED
   # Remove Hysteresis and PVARP 																			COMPLETED
   # Remove rate smoothing in AAI & VVI 																		COMPLETED
@@ -47,22 +49,25 @@
   # Add an up/down for rate smoothing 																		COMPLETED
   # Bring back ARP (missing in AAI)																			COMPLETED
   # Remove rate smoothing in AAI and VVI 																	COMPLETED
+  # Take care of enum for simulink																			COMPLETED
+  # For activity threshold send v-low = 1 and increment by 1  (v high = 7)									COMPLETED
+  # For anything that has OFF, send 0																		COMPLETED
+  # Not using hysteresis, so remove for modes that we implement 											COMPLETED
 
 #===TODO===#
-# Simulink Compatibility
-  # For activity threshold send v-low = 1 and increment by 1  (v high = 7)									simulink stuff
-  # For anything that has OFF, send 0																		simulink stuff
-  # Not using hysteresis, so remove for modes that we implement 											COMPLETED
-  # Serial comms b/w DCM and board
-    # Transmit parameter and mode data
-    # Conduct error checking
-  # Implement egram
-  # Take care of enum for simulink																		 !!!IMPORTANT!!!
+# Simulink Compatibility 																					
+  # Serial comms b/w DCM and board 																			
+    # Transmit parameter and mode data 																		
+    # Conduct error checking 																				
+  # Implement egram 																						NOT HAPPENING
+# Implement feedback messages for every single user action, like saving parameters or loading default parameters (get feedback whether it was successful or not)
+# Fix __set_user_data_pacemaker() to scale by the required amount
 
 #===IMPORT===#
 from tkinter import*
 from tkinter import font
 from rw import*
+from promptWindow import promptWindow
 from promptWindow import promptWindow5
 from copy import deepcopy
 
@@ -151,6 +156,25 @@ class Welcome():
 		self.boardStatus = 1 # 0 means good board
 		self.offsetX = 0
 		self.offsetY = 0
+		self.afterStatusCheckID = NONE
+		self.afterBlinkID = NONE
+
+		#===Mode Feedback parameters===#
+		self.lowerBound = 50
+		self.upperBound = 90
+		self.incrementColour = 1
+		self.currentColour = self.lowerBound
+		
+		self.initialDelay = 20
+		self.delayIncrement = +0
+		self.currentDelay = self.initialDelay
+
+		self.totalSteps = int(2*(self.upperBound-self.lowerBound)/self.incrementColour + 1)
+		self.zeroSlopeStep = int((self.totalSteps-1)/2+1)
+
+		print(self.currentDelay)
+		print(self.totalSteps)
+		print(self.zeroSlopeStep)
 
 		#===Window Parameters===# - should probably replace with #define
 		self.butFill = BOTH
@@ -167,6 +191,7 @@ class Welcome():
 		self.textColourLight = "ghost white"
 		self.buttonTextColour = "black"
 		self.backGroundColour = "white"
+		self.activeBackGroundColour = "green"
 
 		#===Fonts===#
 		self.fontHeading = font.Font(family="BebasNeue-Regular",size=18)
@@ -190,11 +215,17 @@ class Welcome():
 		else:
 			return "BAD"
 
+		# serial = Serial()
+		# return (serial.get_Comms() == 0)
+
 	def __get_Board_Status(self): # Gets board status. Currently psuedo code - will call upon an external class in the future
 		if(self.boardStatus==0):
 			return "GOOD"
 		else:
 			return "BAD"
+
+		# serial = Serial()
+		# return (serial.get_Comms() == 0)
 	
 	def __set_Meta_Status(self): # Sets the board & comms status, using the getter functions for comms and board
 		self.commsStatusInd.set(self.__get_Comms_Status())
@@ -209,7 +240,17 @@ class Welcome():
 		else:
 			secondsToCheck = secondsToCheck-1
 
-		self.root.after(1000,self.__start_Status_Check_Loop,secondsToCheck)
+		self.afterStatusCheckID = self.root.after(1000,self.__start_Status_Check_Loop,secondsToCheck)
+
+	def __end_Status_Check_Loop(self):
+		if self.afterStatusCheckID is not NONE:
+			self.root.after_cancel(self.afterStatusCheckID)
+			self.afterStatusCheckID = NONE
+
+	def __end_Blink_Loop(self):
+		if self.afterBlinkID is not NONE:
+			self.root.after_cancel(self.afterBlinkID)
+			self.afterBlinkID = NONE
 
 	def __get_User_Data_Pacemaker(self): # Gets programmable parameters from pacemaker
 		# serial = Serial()
@@ -237,28 +278,45 @@ class Welcome():
 
 		index = 0
 
-		for param in self.modeDict[self.mode]: # Parsing the parameter array to remove all 'NA's
+		for param in self.modeDict[self.mode]: # Parsing the parameter array to only include relevant parameters
 			print(str(index)+","+str(param))
 			if(param == '1'):
-				if(index == 28): # Checking for Activity Threshold first because it's special.
+				# Before scaling
+				if(index == 28): # Checking for Activity Threshold first because it's special - replacing string descriptors with numbers (that are strings)
 					progParamParsed.append(str(self.__activityThreshold_Enum()))
 					print("Appended "+str(self.__activityThreshold_Enum()))
-				elif(self.progParam[self.__mode_Enum()][index]=='OFF'):
+				elif(self.progParam[self.__mode_Enum()][index]=='OFF'): # Parsing 'OFF' into '0'
 					progParamParsed.append('0')
 					print("Appended 0 for OFF")
-				else:
+				else: # If it's already a number, append the str(number)
 					progParamParsed.append(str(self.progParam[self.__mode_Enum()][index]))
 					print("Appended "+str(self.progParam[self.__mode_Enum()][index]))
+				
+				# Scaling
+				if(index == 3):
+					progParamParsed[-1] = str(0.1*float(progParamParsed[-1]))
+				elif(index == 7):
+					progParamParsed[-1] = str(20*float(progParamParsed[-1]))
+				elif(index == 8):
+					progParamParsed[-1] = str(20*float(progParamParsed[-1]))
+				elif(index == 15):
+					progParamParsed[-1] = str(0.1*float(progParamParsed[-1]))
+				elif(index == 16):
+					progParamParsed[-1] = str(0.1*float(progParamParsed[-1]))
 			index+=1
 
 		print(progParamParsed)
 
+		return 0
+
 		# serial = Serial() # Instantiating a serial object
 
 		# if(serial.upload_Parameters(self.mode,progParamParsed) == 0): # Writing to the board, feedback depending on return value
-		# 	print("success")
+		# 	promptWindow("Success","Successfully ran mode and uploaded parameters.")
+		#	return 0
 		# else:
-		# 	print("failure")
+		# 	promptWindow("Failure","An error occurred and mode is not running. Your parameters have not been uploaded.")
+		#	return -1
 
 	def __get_User_Data(self): # Gets programmable parameters from rw class
 		file=RW()
@@ -295,8 +353,9 @@ class Welcome():
 
 		def __confirmed(window):
 			window.destroy()
-			self.__set_Default_Values()
-			self.__flashSpinboxParams()
+			if(self.__set_Default_Values() == 0):
+				self.__flashSpinboxParams(0)
+			self.__refresh_Screen()
 
 		Label(confirmReset,text="Are you sure you want to reset to nominal values?").pack()
 		Button(confirmReset,text="Yes, reset to nominal values.",command=lambda:__confirmed(confirmReset)).pack(fill=X)
@@ -305,9 +364,12 @@ class Welcome():
 	def __set_Default_Values(self): # Sets default nominal values for one mode by using the rw class
 		self.__get_Default_Values(self.__mode_Enum())
 		self.__set_User_Data_File()
-		self.__set_User_Data_Pacemaker()
-		self.__refresh_Screen()
-		self.__write_To_Log("Loaded default parameters for mode "+str(self.mode))
+		if(self.__set_User_Data_Pacemaker() == 0):
+			self.__write_To_Log("Selected mode "+str(self.mode)+"to run with default parameters")
+			self.__update_Active_Mode_Feedback()
+			return 0
+
+		return -1
 	
 	def __save_Param(self): # Saves the data currently in spinboxes by reading all data, checking if its in range then finally calling the __set_User_Data_File() function 
 		if(self.__check_In_Range()==0): # If the data is bad, it displays an error and reset the spinboxes to what they were at before
@@ -319,14 +381,176 @@ class Welcome():
 				window.destroy()
 				self.__get_Vals()
 				self.__set_User_Data_File()
-				self.__set_User_Data_Pacemaker()
-				self.__flashSpinboxParams(0)
+				if(self.__set_User_Data_Pacemaker() == 0):
+					self.__update_Active_Mode_Feedback()
+					self.__flashSpinboxParams(0)
+
+				self.__refresh_Screen()
 	
 			Label(confirmSave,text="Are you sure you want to run "+self.mode+"?").pack()
 			Button(confirmSave,text="Yes, run "+self.mode+".",command=lambda:__confirmed(confirmSave)).pack(fill=X)
 			Button(confirmSave,text="No, return to editor.",command=confirmSave.destroy).pack(fill=X)
 		else:
 			self.__refresh_Screen()
+
+	def __update_Active_Mode_Feedback(self):
+		self.but_Off.config(bg=self.backGroundColour)
+		self.but_AOO.config(bg=self.backGroundColour)
+		self.but_VOO.config(bg=self.backGroundColour)
+		self.but_AAI.config(bg=self.backGroundColour)
+		self.but_VVI.config(bg=self.backGroundColour)
+		self.but_DOO.config(bg=self.backGroundColour)
+		self.but_AOOR.config(bg=self.backGroundColour)
+		self.but_AAIR.config(bg=self.backGroundColour)
+		self.but_VOOR.config(bg=self.backGroundColour)
+		self.but_VVIR.config(bg=self.backGroundColour)
+		self.but_DOOR.config(bg=self.backGroundColour)
+
+		self.__end_Blink_Loop()
+
+		if(self.__mode_Enum() == -1):
+			# self.but_Off.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_Off,1,0) 
+		elif(self.__mode_Enum() == 2):
+			# self.but_AOO.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_AOO,1,0)
+		elif(self.__mode_Enum() == 3):
+			# self.but_AAI.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_AAI,1,0)
+		elif(self.__mode_Enum() == 4):
+			# self.but_VOO.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_VOO,1,0)
+		elif(self.__mode_Enum() == 5):
+			# self.but_VVI.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_VVI,1,0)
+		elif(self.__mode_Enum() == 7):
+			# self.but_DOO.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_DOO,1,0)
+		elif(self.__mode_Enum() == 10):
+			# self.but_AOOR.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_AOOR,1,0)
+		elif(self.__mode_Enum() == 11):
+			# self.but_AAIR.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_AAIR,1,0)
+		elif(self.__mode_Enum() == 12):
+			# self.but_VOOR.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_VOOR,1,0)
+		elif(self.__mode_Enum() == 13):
+			# self.but_VVIR.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_VVIR,1,0)
+		elif(self.__mode_Enum() == 15):
+			# self.but_DOOR.config(bg=self.activeBackGroundColour)
+			self.afterBlinkID = self.root.after(10,self.__blinkParam,self.but_DOOR,1,0)
+
+	def __blinkParam(self,param,step,select=1):
+		if(select==0):
+			self.currentColour = self.lowerBound
+			self.currentDelay = self.initialDelay
+
+		for i in range(1,self.totalSteps+1):
+			if(step == self.totalSteps):
+				strColour = "grey"+str(self.currentColour)
+				param["bg"] = strColour
+				
+				# print(step)
+				# print(self.currentColour)
+				# print(self.currentDelay)
+
+				self.afterBlinkID = self.root.after(self.currentDelay,self.__blinkParam,param,1)
+				break;
+			elif(step < self.zeroSlopeStep):
+				if(step == 1):
+					print("step 1 with currentcolour: "+str(self.currentColour))
+				
+				strColour = "grey"+str(self.currentColour)
+				param["bg"] = strColour
+
+				# print(step)
+				# print(self.currentColour)
+				# print(self.currentDelay)
+			
+				self.currentColour = self.currentColour + self.incrementColour
+				self.currentDelay = self.currentDelay + self.delayIncrement
+				self.afterBlinkID = self.root.after(self.currentDelay,self.__blinkParam,param,step+1)
+				break;
+			else:
+				strColour = "grey"+str(self.currentColour)
+				param["bg"] = strColour
+				
+				# print(step)
+				# print(self.currentColour)
+				# print(self.currentDelay)
+
+				self.currentColour = self.currentColour - self.incrementColour
+				self.currentDelay = self.currentDelay - self.delayIncrement
+				self.afterBlinkID = self.root.after(self.currentDelay,self.__blinkParam,param,step+1)
+				break;
+
+		# if(step == 0):
+		# 	param["bg"] = "gray40"
+		# 	self.root.after(10,self.__blinkParam,param,1)
+		# elif(step == 1):
+		# 	param["bg"] = "gray45"
+		# 	self.root.after(20,self.__blinkParam,param,2)
+		# elif(step == 2):
+		# 	param["bg"] = "gray50"
+		# 	self.root.after(30,self.__blinkParam,param,3)
+		# elif(step == 3):
+		# 	param["bg"] = "gray55"
+		# 	self.root.after(40,self.__blinkParam,param,4)
+		# elif(step == 4):
+		# 	param["bg"] = "gray60"
+		# 	self.root.after(50,self.__blinkParam,param,5)
+		# elif(step == 5):
+		# 	param["bg"] = "gray65"
+		# 	self.root.after(60,self.__blinkParam,param,6)
+		# elif(step == 6):
+		# 	param["bg"] = "gray70"
+		# 	self.root.after(70,self.__blinkParam,param,7)
+		# elif(step == 7):
+		# 	param["bg"] = "gray75"
+		# 	self.root.after(80,self.__blinkParam,param,8)
+		# elif(step == 8):
+		# 	param["bg"] = "gray80"
+		# 	self.root.after(90,self.__blinkParam,param,9)
+		# elif(step == 9):
+		# 	param["bg"] = "gray85"
+		# 	self.root.after(100,self.__blinkParam,param,10)
+		# elif(step == 10):
+		# 	param["bg"] = "gray90"
+		# 	self.root.after(90,self.__blinkParam,param,11)
+		# elif(step == 11):
+		# 	param["bg"] = "gray95"
+		# 	self.root.after(80,self.__blinkParam,param,12)
+		# elif(step == 12):
+		# 	param["bg"] = "gray90"
+		# 	self.root.after(70,self.__blinkParam,param,13)
+		# elif(step == 13):
+		# 	param["bg"] = "gray85"
+		# 	self.root.after(60,self.__blinkParam,param,14)
+		# elif(step == 14):
+		# 	param["bg"] = "gray80"
+		# 	self.root.after(50,self.__blinkParam,param,15)
+		# elif(step == 15):
+		# 	param["bg"] = "gray75"
+		# 	self.root.after(40,self.__blinkParam,param,16)
+		# elif(step == 16):
+		# 	param["bg"] = "gray70"
+		# 	self.root.after(30,self.__blinkParam,param,17)
+		# elif(step == 17):
+		# 	param["bg"] = "gray65"
+		# 	self.root.after(20,self.__blinkParam,param,18)
+		# elif(step == 18):
+		# 	param["bg"] = "gray60"
+		# 	self.root.after(10,self.__blinkParam,param,19)
+		# elif(step == 19):
+		# 	param["bg"] = "gray55"
+		# 	self.root.after(10,self.__blinkParam,param,20)
+		# elif(step == 20):
+		# 	param["bg"] = "gray50"
+		# 	self.root.after(10,self.__blinkParam,param,0)
+		
+		return
 
 	def __refresh_Screen(self):
 		self.__show_MODE(self.mode)
@@ -399,77 +623,77 @@ class Welcome():
 
 	def __flashSpinboxParams(self,step=0):
 		if(step == 0):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray9"
 				self.progParamFrameItemsR["bg"] = "gray9"
 				self.spinboxParams[i]["bg"] = "gray9"
 				self.labelParams[i]["bg"] = "gray9"
 			self.root.after(10,self.__flashSpinboxParams,1)
 		elif(step == 1):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray19"
 				self.progParamFrameItemsR["bg"] = "gray19"
 				self.spinboxParams[i]["bg"] = "gray19"
 				self.labelParams[i]["bg"] = "gray19"
 			self.root.after(20,self.__flashSpinboxParams,2)
 		elif(step == 2):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray29"
 				self.progParamFrameItemsR["bg"] = "gray29"
 				self.spinboxParams[i]["bg"] = "gray29"
 				self.labelParams[i]["bg"] = "gray29"
 			self.root.after(30,self.__flashSpinboxParams,3)
 		elif(step == 3):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray39"
 				self.progParamFrameItemsR["bg"] = "gray39"
 				self.spinboxParams[i]["bg"] = "gray39"
 				self.labelParams[i]["bg"] = "gray39"
 			self.root.after(40,self.__flashSpinboxParams,4)
 		elif(step == 4):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray49"
 				self.progParamFrameItemsR["bg"] = "gray49"
 				self.spinboxParams[i]["bg"] = "gray49"
 				self.labelParams[i]["bg"] = "gray49"
 			self.root.after(50,self.__flashSpinboxParams,5)
 		elif(step == 5):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray59"
 				self.progParamFrameItemsR["bg"] = "gray59"
 				self.spinboxParams[i]["bg"] = "gray59"
 				self.labelParams[i]["bg"] = "gray59"
 			self.root.after(60,self.__flashSpinboxParams,6)
 		elif(step == 6):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray69"
 				self.progParamFrameItemsR["bg"] = "gray69"
 				self.spinboxParams[i]["bg"] = "gray69"
 				self.labelParams[i]["bg"] = "gray69"
 			self.root.after(70,self.__flashSpinboxParams,7)
 		elif(step == 7):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray79"
 				self.progParamFrameItemsR["bg"] = "gray79"
 				self.spinboxParams[i]["bg"] = "gray79"
 				self.labelParams[i]["bg"] = "gray79"
 			self.root.after(80,self.__flashSpinboxParams,8)
 		elif(step == 8):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray89"
 				self.progParamFrameItemsR["bg"] = "gray89"
 				self.spinboxParams[i]["bg"] = "gray89"
 				self.labelParams[i]["bg"] = "gray89"
 			self.root.after(90,self.__flashSpinboxParams,9)
 		elif(step == 9):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = "gray99"
 				self.progParamFrameItemsR["bg"] = "gray99"
 				self.spinboxParams[i]["bg"] = "gray99"
 				self.labelParams[i]["bg"] = "gray99"
 			self.root.after(100,self.__flashSpinboxParams,10)
 		elif(step == 10):
-			for i in range(31):
+			for i in range(self.numParams):
 				self.progParamFrameItemsL["bg"] = self.backGroundColour
 				self.progParamFrameItemsR["bg"] = self.backGroundColour
 				self.spinboxParams[i]["bg"] = self.backGroundColour
@@ -692,6 +916,8 @@ class Welcome():
 			confirm.title("Logout?")
 
 			def __confirmed(window):
+				self.__end_Status_Check_Loop()
+				self.__end_Blink_Loop()
 				window.destroy()
 				self.root.destroy()
 				from parent import Parent
@@ -706,6 +932,8 @@ class Welcome():
 			confirm.title("Are you sure you want to logout?")
 
 			def __confirmed(window):
+				self.__end_Status_Check_Loop()
+				self.__end_Blink_Loop()
 				window.destroy()
 				self.root.destroy()
 				from parent import Parent
@@ -752,7 +980,7 @@ class Welcome():
 		
 		#===Frame Setup===#
 		self.root.title("Digital Communications Module")
-		self.root.geometry("850x600+100+100")
+		self.root.geometry("1000x600+100+100")
 		
 		# There are 2 high level frames, 'Main frame' and 'log frame'
 			# Interact with parameters in the main frame
@@ -845,9 +1073,9 @@ class Welcome():
 		#===Save & Reset Actions===#
 		self.progParamFrameActions = Frame(self.progParamFrame,bg=self.backGroundColour)
 		self.progParamFrameActions.pack(side=BOTTOM,fill=X,expand=False)
-		self.but_Reset = Button(self.progParamFrameActions,text="Reset parameters to nominal",state=NORMAL,command=self.__confirm_Reset_Default_Values,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
+		self.but_Reset = Button(self.progParamFrameActions,text="Reset parameters to nominal and run current mode",state=NORMAL,command=self.__confirm_Reset_Default_Values,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but_Reset.pack(side=RIGHT)
-		self.but_Save = Button(self.progParamFrameActions,text="Save parameters and Run current mode",state=NORMAL,command=self.__save_Param,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
+		self.but_Save = Button(self.progParamFrameActions,text="Save parameters and run current mode",state=NORMAL,command=self.__save_Param,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but_Save.pack(side=RIGHT)
 
 		#===Parameter labels===#
