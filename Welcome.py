@@ -39,13 +39,20 @@
     # If you save a value, it should be obvious that it was saved 											COMPLETED
   # Show past 2 actions (save/reset)																		COMPLETED
     # Maybe have a window at the bottom, or have a 'log' file that saves all past actions 					COMPLETED
+  # Remove A/V sensitivity for relevant modes (not using)													COMPLETED
+  # Remove Unreg. Voltage for A/V (only need one)															COMPLETED
+  # Remove Hysteresis and PVARP 																			COMPLETED
+  # Remove rate smoothing in AAI & VVI 																		COMPLETED
+  # Extend pulse width to 10ms																				COMPLETED
+  # Add an up/down for rate smoothing 																		COMPLETED
+  # Bring back ARP (missing in AAI)																			COMPLETED
+  # Remove rate smoothing in AAI and VVI 																	COMPLETED
 
 #===TODO===#
-# Simulink Compatibility  
-  # For rateSmoothingRange, OFF should be a really big number (100)											joel stuff
-  # For activity threshold send v-low = 1 and increment by 1  (v high = 7)									joel stuff
-  # For anything that has OFF, send 0																		joel stuff
-  # Not using hysteresis, so remove for modes that we implement 											joel stuff
+# Simulink Compatibility
+  # For activity threshold send v-low = 1 and increment by 1  (v high = 7)									simulink stuff
+  # For anything that has OFF, send 0																		simulink stuff
+  # Not using hysteresis, so remove for modes that we implement 											COMPLETED
   # Serial comms b/w DCM and board
     # Transmit parameter and mode data
     # Conduct error checking
@@ -62,25 +69,25 @@ from copy import deepcopy
 class Welcome():
 	def __init__(self,screen): #Constructor, sets up inital values
 		self.modeDict = {								#Dictionary to map modes to their code which tells the program which parameters are meaningful (1=meaningful)
-			"Off":"0000000000000000000000000000000",
-			"AAT":"1100000101010100110000000000000", 	# Not using
-			"VVT":"1100000010101011000000000000000", 	# Not using
-			"AOO":"1100000101010000000000000000000",
-			"AAI":"1100000101010100110110000000000",
-			"VOO":"1100000010101000000000000000000",
-			"VVI":"1100000010101011000110000000000",
-			"VDD":"1101110010101011001011111100000", 	# Not using
-			"DOO":"1101000111111000000000000000000",
-			"DDI":"1101000111111111110000000000000", 	# Not using
-			"DDD":"1101111111111111111111111100000", 	# Not using
-			"AOOR":"1110000101010000000000000001111",
-			"AAIR":"1110000101010100110110000001111",
-			"VOOR":"1110000010101000000000000001111",
-			"VVIR":"1110000010101011000110000001111",
-			"VDDR":"1111110010101011001011111111111", 	# Not using
-			"DOOR":"1111000111111000000000000001111",
-			"DDIR":"1111000111111111110000000001111", 	# Not using
-			"DDDR":"1111111111111111111111111111111"  	# Not using
+			"Off":"00000000000000000000000000000000",
+			"AAT":"11000001010101001100000000000000", 	# Not using
+			"VVT":"11000000101010110000000000000000", 	# Not using
+			"AOO":"11000001000100000000000000000000",
+			"AAI":"11000001000100001000000000000000",
+			"VOO":"11000000100010000000000000000000",
+			"VVI":"11000000100010010000000000000000",
+			"VDD":"11011100101010110010111111100000", 	# Not using
+			"DOO":"11010001100110000000000000000000",
+			"DDI":"11010001111111111100000000000000", 	# Not using
+			"DDD":"11011111111111111111111111100000", 	# Not using
+			"AOOR":"11100001000100000000110000001111",
+			"AAIR":"11100001000100001000110000001111",
+			"VOOR":"11100000100010000000110000001111",
+			"VVIR":"11100000100010010000110000001111",
+			"VDDR":"11111100101010110010111111111111", 	# Not using
+			"DOOR":"11110001100110000000110000001111",
+			"DDIR":"11110001111111111100110000001111", 	# Not using
+			"DDDR":"11111111111111111111111111111111"  	# Not using
 		}
 		self.mode = "Off"
 
@@ -94,7 +101,7 @@ class Welcome():
 		self.sensedAVDelayOffsetRange = list(('OFF',-10,-20,-30,-40,-50,-60,-70,-80,-90,-100))			#6
 		self.avPulseAmpRegRange = list((0,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0)) #7,8
 		self.avPulseAmpUnregRange = list((0,1.25,2.5,3.75,5))																																#9,10
-		self.avPulseWidthRange = list((0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9))																		#11,12
+		self.avPulseWidthRange = list((0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4.0,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,5.0,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,6.0,6.1,6.2,6.3,6.4,6.5,6.6,6.7,6.8,6.9,7.0,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,8.0,8.1,8.2,8.3,8.4,8.5,8.6,8.7,8.8,8.9,9.0,9.1,9.2,9.3,9.4,9.5,9.6,9.7,9.8,9.9,10.0))	#11,12
 		self.aSensitivityRange = list((0.25,0.5,0.75))+list((1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10))																			#13
 		self.vSensitivityRange = list((0.25,0.5,0.75))+list((1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10))																			#14
 		self.VRPRange = list(range(150,510,10))															#15
@@ -102,27 +109,27 @@ class Welcome():
 		self.pvarpRange = list(range(150,501,10))														#17
 		self.pvarpExtensionRange = list(('OFF'))+list(range(50,401,50))									#18
 		self.hysRange = ['OFF']+list(range(30,50,5))+list(range(50,90,1))+list(range(90,176,5))			#19
-		self.rateSmoothingRange = list(('OFF',3,6,9,12,15,18,21,25))									#20
-		self.atrFallBackModeRange = list(('OFF','ON'))													#24
-		self.atrDurationCyclesRange = list(range(10,11,1))												#21
-		self.atrDurationLowerRange = list(range(20,81,20))												#22
-		self.atrDurationUpperRange = list(range(100,2001,100))											#23
-		self.atrFallBackTimeRange = list(range(1,6,1))													#25
-		self.ventricularBlankingRange = list(range(30,61,10))											#26
-		self.activityThresholdRange = list(('V-LOW','LOW','MED-LOW','MED','MED-HIGH','HIGH','V-HIGH'))	#27
-		self.reactionTimeRange = list(range(10,51,10))													#28
-		self.responseFactorRange = list(range(1,17,1))													#29
-		self.recoveryTimeRange = list(range(2,17,1))													#30
+		self.rateSmoothingRange = list(('OFF',3,6,9,12,15,18,21,25))									#20,21
+		self.atrFallBackModeRange = list(('OFF','ON'))													#25
+		self.atrDurationCyclesRange = list(range(10,11,1))												#22
+		self.atrDurationLowerRange = list(range(20,81,20))												#23
+		self.atrDurationUpperRange = list(range(100,2001,100))											#24
+		self.atrFallBackTimeRange = list(range(1,6,1))													#26
+		self.ventricularBlankingRange = list(range(30,61,10))											#27
+		self.activityThresholdRange = list(('V-LOW','LOW','MED-LOW','MED','MED-HIGH','HIGH','V-HIGH'))	#28
+		self.reactionTimeRange = list(range(10,51,10))													#29
+		self.responseFactorRange = list(range(1,17,1))													#30
+		self.recoveryTimeRange = list(range(2,17,1))													#31
 		self.rangesParam = list((self.lowerRateLimitRange,self.upperRateLimitRange,self.maxSensorRateRange,self.fixedAVDelayRange,self.dyanmicAVDelayRange,self.minDynamicAVDelayRange,
 			self.sensedAVDelayOffsetRange,self.avPulseAmpRegRange,self.avPulseAmpRegRange,self.avPulseAmpUnregRange,self.avPulseAmpUnregRange,self.avPulseWidthRange,self.avPulseWidthRange,
-			self.aSensitivityRange,self.vSensitivityRange,self.VRPRange,self.ARPRange,self.pvarpRange,self.pvarpExtensionRange,self.hysRange,self.rateSmoothingRange,self.atrDurationCyclesRange,
+			self.aSensitivityRange,self.vSensitivityRange,self.VRPRange,self.ARPRange,self.pvarpRange,self.pvarpExtensionRange,self.hysRange,self.rateSmoothingRange,self.rateSmoothingRange,self.atrDurationCyclesRange,
 			self.atrDurationLowerRange,self.atrDurationUpperRange,self.atrFallBackModeRange,self.atrFallBackTimeRange,self.ventricularBlankingRange,self.activityThresholdRange,
 			self.reactionTimeRange,self.responseFactorRange,self.recoveryTimeRange)) 					# Combining all ranges into a list
 
 		self.parameterNamesParam = ["Lower Rate Limit","Upper Rate Limit","Maximum Sensor Rate","Fixed AV Delay","Dynamic AV Delay","Minimum Dynamic AV Delay",
 		"Sensed AV Delay Offset","Atrial Pulse Amplitude Regulated","Ventricular Pulse Amplitude Regulated","Atrial Pulse Amplitude Unregulated",
 		"Ventricular Pulse Amplitude Unregulated","Atrial Pulse Width","Ventricular Pulse Width","Atrial Sensitivity","Ventricular Sensitivity",
-		"Ventricular Regulatory Pulse","Atrial Regulatory Pulse","PVARP","PVARP Extension","Hysteresis","Rate Smoothing","Atrial Fallback Mode",
+		"Ventricular Regulatory Pulse","Atrial Regulatory Pulse","PVARP","PVARP Extension","Hysteresis","Rate Smoothing Up","Rate Smoothing Down","Atrial Fallback Mode",
 		"Atrial Duration Cycles","Atrial Duration Lower Range","Atrial Duration Upper Range","Ventricular Blanking","Atrial Fall Back Time","Activity Threshold",
 		"Reaction Time","Response Factor","Recovery Time"]
 
@@ -136,7 +143,7 @@ class Welcome():
 		self.refreshTime = 0
 
 		#===Auxiliary Variable parameters===#
-		self.numParams = 31
+		self.numParams = 32
 		self.labelParams = [None]*self.numParams
 		self.spinboxParams = [None]*self.numParams
 		self.commsStatus = 1 # 0 means good status
@@ -158,7 +165,7 @@ class Welcome():
 		self.topFrameColour = "cornflower blue"
 		self.textColourLight = "ghost white"
 		self.buttonTextColour = "black"
-		self.backGroundColour = "ghost white"
+		self.backGroundColour = "white"
 
 		#===Fonts===#
 		self.fontHeading = font.Font(family="BebasNeue-Regular",size=18)
@@ -174,7 +181,7 @@ class Welcome():
 		self.__start_Status_Check_Loop(self.refreshTime)
 		self.__create_Welcome_Window()
 
-		self.root.mainloop() #All statements must occur before this line as .mainloop() traps it for all eternity. (.mainloop ~ while(1))
+		self.root.mainloop() #All statements must occur before this line as .mainloop() traps it for all eternity. (.mainloop ~ while(1);)
 
 	def __get_Comms_Status(self): # Gets comms status. Currently psuedo code - will call upon an external class in the future
 		if(self.commsStatus==0):
@@ -830,26 +837,27 @@ class Welcome():
 		self.labelParams[12] = Label(self.progParamFrameItemsL,text="Ventricular Pulse Width (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		self.labelParams[13] = Label(self.progParamFrameItemsL,text="Atrial Sensitivity (mV): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		self.labelParams[14] = Label(self.progParamFrameItemsL,text="Ventricular Sensitivity (mV): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
-		self.labelParams[15] = Label(self.progParamFrameItemsL,text="Venrticular Refractory Period (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[15] = Label(self.progParamFrameItemsL,text="Ventricular Refractory Period (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
 		self.labelParams[16] = Label(self.progParamFrameItemsL,text="Atrial Refractory Period (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		self.labelParams[17] = Label(self.progParamFrameItemsL,text="PVARP (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		self.labelParams[18] = Label(self.progParamFrameItemsL,text="PVARP Extension (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		self.labelParams[19] = Label(self.progParamFrameItemsL,text="Hysteresis (ppm): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[20] = Label(self.progParamFrameItemsL,text="Rate Smoothing (%): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
-		self.labelParams[21] = Label(self.progParamFrameItemsL,text="ATR Duration Cycles (N/A): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
-		self.labelParams[22] = Label(self.progParamFrameItemsL,text="ATR Duration Lower Range: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
-		self.labelParams[23] = Label(self.progParamFrameItemsL,text="ATR Duration Upper Range: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[20] = Label(self.progParamFrameItemsL,text="Rate Smoothing Up (%): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[21] = Label(self.progParamFrameItemsL,text="Rate Smoothing Down (%): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[22] = Label(self.progParamFrameItemsL,text="ATR Duration Cycles (N/A): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[23] = Label(self.progParamFrameItemsL,text="ATR Duration Lower Range: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[24] = Label(self.progParamFrameItemsL,text="ATR Duration Upper Range: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[24] = Label(self.progParamFrameItemsL,text="ATR Mode: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
-		self.labelParams[25] = Label(self.progParamFrameItemsL,text="ATR Fallback Time (min): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
-		self.labelParams[26] = Label(self.progParamFrameItemsL,text="Ventricular Blanking (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
-		self.labelParams[27] = Label(self.progParamFrameItemsL,text="Activity Threshold: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[25] = Label(self.progParamFrameItemsL,text="ATR Mode: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[26] = Label(self.progParamFrameItemsL,text="ATR Fallback Time (min): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[27] = Label(self.progParamFrameItemsL,text="Ventricular Blanking (ms): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[28] = Label(self.progParamFrameItemsL,text="Activity Threshold: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 		
-		self.labelParams[28] = Label(self.progParamFrameItemsL,text="Reaction Time (s): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
-		self.labelParams[29] = Label(self.progParamFrameItemsL,text="Response Factor: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
-		self.labelParams[30] = Label(self.progParamFrameItemsL,text="Recovery Time (min): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[29] = Label(self.progParamFrameItemsL,text="Reaction Time (s): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[30] = Label(self.progParamFrameItemsL,text="Response Factor: ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
+		self.labelParams[31] = Label(self.progParamFrameItemsL,text="Recovery Time (min): ",justify=LEFT,bg=self.backGroundColour,font=self.fontLabel)
 
 		#===Parameter Spinboxes===#
 		self.progParamFrameItemsR = Frame(self.progParamFrame,bg=self.backGroundColour)
@@ -880,18 +888,19 @@ class Welcome():
 		self.spinboxParams[19] = Spinbox(self.progParamFrameItemsR,values=self.hysRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 		
 		self.spinboxParams[20] = Spinbox(self.progParamFrameItemsR,values=self.rateSmoothingRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
-		self.spinboxParams[21] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationCyclesRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
-		self.spinboxParams[22] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationLowerRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
-		self.spinboxParams[23] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationUpperRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[21] = Spinbox(self.progParamFrameItemsR,values=self.rateSmoothingRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[22] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationCyclesRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[23] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationLowerRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[24] = Spinbox(self.progParamFrameItemsR,values=self.atrDurationUpperRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 		
-		self.spinboxParams[24] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackModeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
-		self.spinboxParams[25] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackTimeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
-		self.spinboxParams[26] = Spinbox(self.progParamFrameItemsR,values=self.ventricularBlankingRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
-		self.spinboxParams[27] = Spinbox(self.progParamFrameItemsR,values=self.activityThresholdRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[25] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackModeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[26] = Spinbox(self.progParamFrameItemsR,values=self.atrFallBackTimeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[27] = Spinbox(self.progParamFrameItemsR,values=self.ventricularBlankingRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[28] = Spinbox(self.progParamFrameItemsR,values=self.activityThresholdRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 
-		self.spinboxParams[28] = Spinbox(self.progParamFrameItemsR,values=self.reactionTimeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
-		self.spinboxParams[29] = Spinbox(self.progParamFrameItemsR,values=self.responseFactorRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
-		self.spinboxParams[30] = Spinbox(self.progParamFrameItemsR,values=self.recoveryTimeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[29] = Spinbox(self.progParamFrameItemsR,values=self.reactionTimeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[30] = Spinbox(self.progParamFrameItemsR,values=self.responseFactorRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
+		self.spinboxParams[31] = Spinbox(self.progParamFrameItemsR,values=self.recoveryTimeRange,bd=self.spinboxBD,width=self.spinboxWidth,justify=self.spinboxJustify,font=self.fontSpinbox)
 
 		self.but_Off.config(relief='sunken')
 

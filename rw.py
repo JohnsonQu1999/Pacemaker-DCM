@@ -66,6 +66,8 @@ class RW():
 
 		for i in range(len(p2)):
 			self.progParam.append(p2[i].strip().split(","))
+			for j in range(len(self.progParam[i])):
+				self.progParam[i][j] = self.progParam[i][j].strip()
 
 	def get_ProgParam(self,mode): # if mode=0; return actual vals, if mode=anything else, return default
 		self.__read_File(mode)
