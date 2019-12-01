@@ -144,6 +144,7 @@ class Welcome():
 
 		#===Auxiliary Variable parameters===#
 		self.numParams = 32
+		self.activityThresholdIndex = 28
 		self.labelParams = [None]*self.numParams
 		self.spinboxParams = [None]*self.numParams
 		self.commsStatus = 1 # 0 means good status
@@ -232,13 +233,25 @@ class Welcome():
 				indexParsed+=1
 
 	def __set_User_Data_Pacemaker(self): # Sets programmable parameters to pacemaker
-		progParamParsed = self.progParam # Parsed parameter array
+		progParamParsed = [] # Parsed parameter array
 
 		index = 0
 
 		for param in self.modeDict[self.mode]: # Parsing the parameter array to remove all 'NA's
-			if(param == 1):
-				progParamParsed.append(self.progParam[index])
+			print(str(index)+","+str(param))
+			if(param == '1'):
+				if(index == 28): # Checking for Activity Threshold first because it's special.
+					progParamParsed.append(str(self.__activityThreshold_Enum()))
+					print("Appended "+str(self.__activityThreshold_Enum()))
+				elif(self.progParam[self.__mode_Enum()][index]=='OFF'):
+					progParamParsed.append('0')
+					print("Appended 0 for OFF")
+				else:
+					progParamParsed.append(str(self.progParam[self.__mode_Enum()][index]))
+					print("Appended "+str(self.progParam[self.__mode_Enum()][index]))
+			index+=1
+
+		print(progParamParsed)
 
 		# serial = Serial() # Instantiating a serial object
 
@@ -251,7 +264,7 @@ class Welcome():
 		file=RW()
 		self.progParam=file.get_ProgParam(0)
 
-	def __set_User_Data(self): # Sets user data by sending self.progParam to rw class
+	def __set_User_Data_File(self): # Sets user data by sending self.progParam to rw class
 		file = RW()
 		file.set_ProgParam(self.progParam)
 
@@ -291,11 +304,12 @@ class Welcome():
 
 	def __set_Default_Values(self): # Sets default nominal values for one mode by using the rw class
 		self.__get_Default_Values(self.__mode_Enum())
-		self.__set_User_Data()
+		self.__set_User_Data_File()
+		self.__set_User_Data_Pacemaker()
 		self.__refresh_Screen()
 		self.__write_To_Log("Loaded default parameters for mode "+str(self.mode))
 	
-	def __save_Param(self): # Saves the data currently in spinboxes by reading all data, checking if its in range then finally calling the __set_User_Data() function 
+	def __save_Param(self): # Saves the data currently in spinboxes by reading all data, checking if its in range then finally calling the __set_User_Data_File() function 
 		if(self.__check_In_Range()==0): # If the data is bad, it displays an error and reset the spinboxes to what they were at before
 			confirmSave = Tk()
 			confirmSave.geometry(self.popupLocation)
@@ -304,7 +318,8 @@ class Welcome():
 			def __confirmed(window):
 				window.destroy()
 				self.__get_Vals()
-				self.__set_User_Data()
+				self.__set_User_Data_File()
+				self.__set_User_Data_Pacemaker()
 				self.__flashSpinboxParams(0)
 	
 			Label(confirmSave,text="Are you sure you want to run "+self.mode+"?").pack()
@@ -553,6 +568,25 @@ class Welcome():
 			return 16
 		if(self.mode == "DDDR"):
 			return 17
+
+	def __activityThreshold_Enum(self):
+		if(self.progParam[self.__mode_Enum()][self.activityThresholdIndex] == 'V-LOW'):
+			return 1
+		if(self.progParam[self.__mode_Enum()][self.activityThresholdIndex] == 'LOW'):
+			return 2
+		if(self.progParam[self.__mode_Enum()][self.activityThresholdIndex] == 'MED-LOW'):
+			return 3
+		if(self.progParam[self.__mode_Enum()][self.activityThresholdIndex] == 'MED'):
+			return 4
+		if(self.progParam[self.__mode_Enum()][self.activityThresholdIndex] == 'MED-HIGH'):
+			return 5
+		if(self.progParam[self.__mode_Enum()][self.activityThresholdIndex] == 'HIGH'):
+			return 6
+		if(self.progParam[self.__mode_Enum()][self.activityThresholdIndex] == 'V-HIGH'):
+			return 7
+		print(self.progParam[self.__mode_Enum()][self.activityThresholdIndex])
+		print("Activity Threshold could not be enumerated")
+		return -1
 
 	def __show_MODE(self,mode): # Displays the correct labels, spinboxes, and activates/deactivates the save/reset buttons
 		# If values different from stored, confirm if they want to switch
