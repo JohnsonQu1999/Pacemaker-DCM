@@ -41,6 +41,7 @@
     # Maybe have a window at the bottom, or have a 'log' file that saves all past actions 					COMPLETED
   # Properly end the .after() that checks comms, so there's no error when logging out 						COMPLETED
   # Indicate which mode is running on the DCM 																COMPLETED
+  # Fix __set_user_data_pacemaker() to scale by the required amount
 # Make things compatible with the board 																	COMPLETED
   # Remove Unreg. Voltage for A/V (only need one)															COMPLETED
   # Remove Hysteresis and PVARP 																			COMPLETED
@@ -53,6 +54,7 @@
   # For activity threshold send v-low = 1 and increment by 1  (v high = 7)									COMPLETED
   # For anything that has OFF, send 0																		COMPLETED
   # Not using hysteresis, so remove for modes that we implement 											COMPLETED
+  # Send mode for .__set_user_values_pacemaker()
 
 #===TODO===#
 # Simulink Compatibility 																					
@@ -61,7 +63,6 @@
     # Conduct error checking 																				
   # Implement egram 																						NOT HAPPENING
 # Implement feedback messages for every single user action, like saving parameters or loading default parameters (get feedback whether it was successful or not)
-# Fix __set_user_data_pacemaker() to scale by the required amount
 
 #===IMPORT===#
 from tkinter import*
@@ -145,6 +146,7 @@ class Welcome():
 		self.commsStatusInd = StringVar()
 		self.boardStatusInd = StringVar()
 		self.refreshTimeVar = StringVar()
+		self.currentMode = StringVar()
 		self.refreshTime = 0
 
 		#===Auxiliary Variable parameters===#
@@ -279,7 +281,8 @@ class Welcome():
 
 	def __set_User_Data_Pacemaker(self): # Sets programmable parameters to pacemaker
 		progParamParsed = [] # Parsed parameter array
-
+		modeEnumPacemaker = self.__mode_Enum_Pacemaker()
+		
 		index = 0
 
 		for param in self.modeDict[self.mode]: # Parsing the parameter array to only include relevant parameters
@@ -310,12 +313,13 @@ class Welcome():
 			index+=1
 
 		print(progParamParsed)
+		print(modeEnumPacemaker)
 
 		return 0
 
 		# serial = Serial() # Instantiating a serial object
 
-		# if(serial.upload_Parameters(self.mode,progParamParsed) == 0): # Writing to the board, feedback depending on return value
+		# if(serial.upload_Parameters(modeEnumPacemaker,progParamParsed) == 0): # Writing to the board, feedback depending on return value
 		# 	promptWindow("Success","Successfully ran mode and uploaded parameters.")
 		#	return 0
 		# else:
@@ -409,6 +413,9 @@ class Welcome():
 		self.but_VOOR.config(bg=self.backGroundColour)
 		self.but_VVIR.config(bg=self.backGroundColour)
 		self.but_DOOR.config(bg=self.backGroundColour)
+
+		self.currentMode.set(self.mode)
+		print("self.mode: "+self.mode+",self.currentMode: "+self.currentMode.get())
 
 		self.__end_Blink_Loop()
 
@@ -797,6 +804,32 @@ class Welcome():
 		if(self.mode == "DDDR"):
 			return 17
 
+	def __mode_Enum_Pacemaker(self):
+		if(self.mode == "Off"):
+			return 0
+		if(self.mode == "AOO"):
+			return 1
+		if(self.mode == "VOO"):
+			return 2
+		if(self.mode == "AAI"):
+			return 3
+		if(self.mode == "VVI"):
+			return 4
+		if(self.mode == "DOO"):
+			return 5
+		if(self.mode == "AOOR"):
+			return 6
+		if(self.mode == "VOOR"):
+			return 7
+		if(self.mode == "AAIR"):
+			return 8
+		if(self.mode == "VVIR"):
+			return 9
+		if(self.mode == "DOOR"):
+			return 10
+
+		return -1
+
 	def __activityThreshold_Enum(self):
 		if(self.progParam[self.__mode_Enum()][self.activityThresholdIndex] == 'V-LOW'):
 			return 1
@@ -1010,9 +1043,15 @@ class Welcome():
 		self.UpdateIndicatorLabel.pack(side=LEFT)
 		self.UpdateIndicatorVar = Label(self.metaDataFrame,textvariable=self.refreshTimeVar,bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
 		self.UpdateIndicatorVar.pack(side=LEFT)
-		self.but_Exit = Button(self.metaDataFrame,text="Exit",state=NORMAL,command=self.__exit,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
+		self.CurrentModeLabel = Label(self.metaDataFrame,text="   Active Mode: ",bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
+		self.CurrentModeLabel.pack(side=LEFT)
+		self.currentModeVar = Label(self.metaDataFrame,textvariable=self.currentMode,bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
+		self.currentModeVar.pack(side=LEFT)
+		self.but_Exit = Button(self.metaDataFrame,text="Exit",relief='flat',state=NORMAL,command=self.__exit,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but_Exit.pack(side=RIGHT)
-		self.but_Logout = Button(self.metaDataFrame,text="Logout",state=NORMAL,command=self.__logout,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
+		# self.paddingLogExit = Label(self.metaDataFrame,bg=self.backGroundColour,fg=self.backGroundColour,width=10)
+		# self.paddingLogExit.pack(side=RIGHT)
+		self.but_Logout = Button(self.metaDataFrame,text="Logout",relief='flat',state=NORMAL,command=self.__logout,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but_Logout.pack(side=RIGHT)
 
 		#===Bottom frames===#
@@ -1179,9 +1218,9 @@ class Welcome():
 		self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 		self.Info1 = Label(self.logInfoFrame, text="Viewing up to 250 actions in order from most recent to oldest: ",bg=self.topFrameColour,fg=self.textColourLight,font=self.fontMeta)
 		self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.but1_Exit = Button(self.logInfoFrame,text="Exit",state=NORMAL,command=self.__exit,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
+		self.but1_Exit = Button(self.logInfoFrame,text="Exit",state=NORMAL,relief='flat',command=self.__exit,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but1_Exit.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		self.but1_Logout = Button(self.logInfoFrame,text="Logout",state=NORMAL,command=self.__logout,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
+		self.but1_Logout = Button(self.logInfoFrame,text="Logout",state=NORMAL,relief='flat',command=self.__logout,bg=self.backGroundColour,fg=self.buttonTextColour,font=self.fontButton)
 		self.but1_Logout.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 
 		#===Middle Text area===#
