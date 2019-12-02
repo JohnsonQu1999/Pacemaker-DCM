@@ -373,7 +373,7 @@ class Welcome():
 		self.__get_Default_Values(self.__mode_Enum())
 		self.__set_User_Data_File()
 		if(self.__set_User_Data_Pacemaker() == 0):
-			self.__write_To_Log("Selected mode "+str(self.mode)+"to run with default parameters")
+			self.__write_To_Log("Selected mode "+str(self.mode)+" to run with default parameters")
 			self.__update_Active_Mode_Feedback()
 			return 0
 
