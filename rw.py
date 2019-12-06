@@ -16,9 +16,9 @@
 
 class RW():
 	def __init__(self):
-		self.fileName="file.txt"
-		self.defaultFileName="defaultUserData.txt"
-		self.logFileName = "log.txt"
+		self.fileName="C:/Users/bluem/Desktop/DCM/Pacemaker/file.txt"
+		self.defaultFileName="C:/Users/bluem/Desktop/DCM/Pacemaker/defaultUserData.txt"
+		self.logFileName = "C:/Users/bluem/Desktop/DCM/Pacemaker/log.txt"
 		self.maxLogLines = 250
 		self.logLines = 0
 		self.progParam = []

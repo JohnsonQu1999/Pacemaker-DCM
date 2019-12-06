@@ -99,7 +99,7 @@ class Parent():
 				self.unames.append(self.userstr.get())
 				self.pwords.append(self.pw1str.get())
 
-				srcFile = open("data.csv", "a+")
+				srcFile = open("C:/Users/bluem/Desktop/DCM/Pacemaker/data.csv", "a+")
 				srcWrite = csv.DictWriter(srcFile, fieldnames=['username', 'password'])
 				srcWrite.writerow({'username' : self.userstr.get(), 'password' : self.pw1str.get()})
 				srcFile.close()
@@ -108,7 +108,7 @@ class Parent():
 	def getfromfile(self):
 		#storing data in textfile into array so it can be compared
 		try:  # Open the CSV we store the user/pass combos in
-			srcFile = open("data.csv", "r")
+			srcFile = open("C:/Users/bluem/Desktop/DCM/Pacemaker/data.csv", "r")
 			srcData = csv.DictReader(srcFile, fieldnames=['username', 'password'])
 
 			# Append to array of unames and passwords
@@ -117,7 +117,7 @@ class Parent():
 				self.pwords.append(row['password'])
 
 		except:  # If file does not exist, create it
-			srcFile = open("data.csv", "w")
+			srcFile = open("C:/Users/bluem/Desktop/DCM/Pacemaker/data.csv", "w")
 			# Close the file so we can re-open it in write mode later
 			srcFile.close()
 

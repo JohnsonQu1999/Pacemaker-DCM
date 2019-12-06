@@ -1,5 +1,15 @@
+#===PROGRAM DETAILS===#
+# Name: Welcome.py
+# Version: 2.4.30
+# Latest commit date: 03-DEC-2019
+# Purpose: 
+  # Draw the main screen that the user interacts with
+  # Implement functionality to save and read data, check data for errors
+  # Ensure the DCM is user friendly
+# Author: Johnson Qu
+
 #===ABSTRACTION LAYER===#
-# Required inputs: 
+# Required inputs: Tk() object
 # Behaviour:
 #  - Draws main GUI with all parameters present - capable of utilizing and managing windows for display of text and graphics
 #  - Creates interface for pacing modes
@@ -10,6 +20,8 @@
 #  - Allows user to tell instance they want to reset parameters to nominal values
 #  - Visually indicates when the DCM and device are communicating
 #  - Visually indicates when a different pacemaker device is approached than was previously interrogated
+#  - Prompts user if they are sure of any actions that may result in lost data
+#  - Allows user to see past actions in case an error was made
 
 #===COMPLETED TODO ITEMS==#
 # IDEA: for the edit_XXXX's, instead of making a dedicated method for each mode,							COMPLETED
@@ -41,8 +53,8 @@
     # Maybe have a window at the bottom, or have a 'log' file that saves all past actions 					COMPLETED
   # Properly end the .after() that checks comms, so there's no error when logging out 						COMPLETED
   # Indicate which mode is running on the DCM 																COMPLETED
-  # Fix __set_user_data_pacemaker() to scale by the required amount
-# Make things compatible with the board 																	COMPLETED
+  # Fix __set_user_data_pacemaker() to scale by the required amount											COMPLETED
+# Simulink Compatibility				 																	COMPLETED
   # Remove Unreg. Voltage for A/V (only need one)															COMPLETED
   # Remove Hysteresis and PVARP 																			COMPLETED
   # Remove rate smoothing in AAI & VVI 																		COMPLETED
@@ -54,15 +66,14 @@
   # For activity threshold send v-low = 1 and increment by 1  (v high = 7)									COMPLETED
   # For anything that has OFF, send 0																		COMPLETED
   # Not using hysteresis, so remove for modes that we implement 											COMPLETED
-  # Send mode for .__set_user_values_pacemaker()
+  # Send mode for .__set_user_values_pacemaker()															COMPLETED
+  # Serial comms b/w DCM and board 																			COMPLETED
+    # Transmit parameter and mode data 																		COMPLETED
+    # Conduct error checking 																				COMPLETED
+	# Implement feedback messages for every single user action 												COMPLETED
 
 #===TODO===#
-# Simulink Compatibility 																					
-  # Serial comms b/w DCM and board 																			
-    # Transmit parameter and mode data 																		
-    # Conduct error checking 																				
-  # Implement egram 																						NOT HAPPENING
-# Implement feedback messages for every single user action, like saving parameters or loading default parameters (get feedback whether it was successful or not)
+# Done.
 
 #===IMPORT===#
 from tkinter import*
@@ -70,7 +81,9 @@ from tkinter import font
 from rw import*
 from promptWindow import promptWindow
 from promptWindow import promptWindow5
+from promptWindow import promptWindow2
 from copy import deepcopy
+from ser import *
 
 class Welcome():
 	def __init__(self,screen): #Constructor, sets up inital values
@@ -154,8 +167,9 @@ class Welcome():
 		self.activityThresholdIndex = 28
 		self.labelParams = [None]*self.numParams
 		self.spinboxParams = [None]*self.numParams
-		self.commsStatus = 1 # 0 means good status
-		self.boardStatus = 1 # 0 means good board
+		self.commsStatus = -1 # 0 means good status
+		self.boardStatus = -1 # 0 means good board
+		self.fakeConnection = -1 # 0 means fake the connection; anything else means business as usual
 		self.offsetX = 0
 		self.offsetY = 0
 		self.afterStatusCheckID = NONE
@@ -208,26 +222,43 @@ class Welcome():
 		self.__get_User_Data()
 		self.__start_Status_Check_Loop(self.refreshTime)
 		self.__create_Welcome_Window()
+		self.__welcome_Prompts()
 
 		self.root.mainloop() #All statements must occur before this line as .mainloop() traps it for all eternity. (.mainloop ~ while(1);)
 
 	def __get_Comms_Status(self): # Gets comms status. Currently psuedo code - will call upon an external class in the future
+		if(self.fakeConnection == 0):
+			self.commsStatus = 0
+			self.boardStatus = 0
+			return "GOOD"
+		# Check comms before this line
+		ser = Serial()
+		self.commsStatus = ser.checkConnection()
+
 		if(self.commsStatus==0):
-			self.commsStatus=1
+			# self.commsStatus=-1
 			return "GOOD"
 		else:
-			self.commsStatus=0
+			# self.commsStatus=0
 			return "BAD"
 
 		# serial = Serial()
 		# return (serial.get_Comms() == 0)
 
 	def __get_Board_Status(self): # Gets board status. Currently psuedo code - will call upon an external class in the future
+		if(self.fakeConnection == 0):
+			self.commsStatus = 0
+			self.boardStatus = 0
+			return "GOOD"
+		# Check board before this line
+		ser = Serial()
+		self.boardStatus = ser.checkConnection()
+
 		if(self.boardStatus==0):
-			self.boardStatus=1
+			# self.boardStatus=1
 			return "GOOD"
 		else:
-			self.boardStatus=0
+			# self.boardStatus=0
 			return "BAD"
 
 		# serial = Serial()
@@ -258,30 +289,9 @@ class Welcome():
 			self.root.after_cancel(self.afterBlinkID)
 			self.afterBlinkID = NONE
 
-	def __get_User_Data_Pacemaker(self): # Gets programmable parameters from pacemaker
-		# serial = Serial()
-
-		# progParamUnParsed = serial.download_Parameters(self.mode)
-
-		if(progParamUnParsed == -1):
-			print("failure")
-			return
-
-		indexParsed = 0
-		indexUnparsed = 0
-
-		for param in self.modeDict[self.mode]:
-			if (param == 1):
-				self.progParam.append(progParamUnParsed[indexUnParsed])
-				indexUnparsed+=1
-				indexParsed+=1
-			else:
-				self.progParam.append("NA")
-				indexParsed+=1
-
 	def __set_User_Data_Pacemaker(self): # Sets programmable parameters to pacemaker
 		progParamParsed = [] # Parsed parameter array
-		modeEnumPacemaker = self.__mode_Enum_Pacemaker()
+		modeEnumPacemaker = [self.__mode_Enum_Pacemaker()]
 		
 		index = 0
 
@@ -290,41 +300,53 @@ class Welcome():
 			if(param == '1'):
 				# Before scaling
 				if(index == 28): # Checking for Activity Threshold first because it's special - replacing string descriptors with numbers (that are strings)
-					progParamParsed.append(str(self.__activityThreshold_Enum()))
-					print("Appended "+str(self.__activityThreshold_Enum()))
+					progParamParsed.append(int(self.__activityThreshold_Enum()))
+					print("Appended "+str(int(self.__activityThreshold_Enum())))
 				elif(self.progParam[self.__mode_Enum()][index]=='OFF'): # Parsing 'OFF' into '0'
-					progParamParsed.append('0')
+					progParamParsed.append(int(0))
 					print("Appended 0 for OFF")
 				else: # If it's already a number, append the str(number)
-					progParamParsed.append(str(self.progParam[self.__mode_Enum()][index]))
-					print("Appended "+str(self.progParam[self.__mode_Enum()][index]))
+					progParamParsed.append(float(self.progParam[self.__mode_Enum()][index]))
+					print("Appended "+str(float(self.progParam[self.__mode_Enum()][index])))
 				
 				# Scaling
 				if(index == 3):
-					progParamParsed[-1] = str(0.1*float(progParamParsed[-1]))
+					progParamParsed[-1] = int(0.1*float(progParamParsed[-1]))
 				elif(index == 7):
-					progParamParsed[-1] = str(20*float(progParamParsed[-1]))
+					progParamParsed[-1] = int(20*float(progParamParsed[-1]))
 				elif(index == 8):
-					progParamParsed[-1] = str(20*float(progParamParsed[-1]))
+					progParamParsed[-1] = int(20*float(progParamParsed[-1]))
+				elif(index == 11):
+					progParamParsed[-1] = int(10*float(progParamParsed[-1]))
+				elif(index == 12):
+					progParamParsed[-1] = int(10*float(progParamParsed[-1]))
 				elif(index == 15):
-					progParamParsed[-1] = str(0.1*float(progParamParsed[-1]))
+					progParamParsed[-1] = int(0.1*float(progParamParsed[-1]))
 				elif(index == 16):
-					progParamParsed[-1] = str(0.1*float(progParamParsed[-1]))
+					progParamParsed[-1] = int(0.1*float(progParamParsed[-1]))
+				else:
+					progParamParsed[-1] = int(progParamParsed[-1])
+			else:
+				progParamParsed.append(int(0))
 			index+=1
 
 		print(progParamParsed)
 		print(modeEnumPacemaker)
 
-		return 0
+		if(self.fakeConnection == 0):
+			return 0
 
-		# serial = Serial() # Instantiating a serial object
+		ser = None
+		ser = Serial() # Instantiating a serial object
 
-		# if(serial.upload_Parameters(modeEnumPacemaker,progParamParsed) == 0): # Writing to the board, feedback depending on return value
-		# 	promptWindow("Success","Successfully ran mode and uploaded parameters.")
-		#	return 0
-		# else:
-		# 	promptWindow("Failure","An error occurred and mode is not running. Your parameters have not been uploaded.")
-		#	return -1
+		if(ser.checksend(modeEnumPacemaker,progParamParsed) == 0): # Writing to the board, feedback depending on return value
+			promptWindow("Success","Successfully ran mode and uploaded parameters.")
+			ser = None
+			return 0
+		else:
+			promptWindow("Failure","An error occurred and mode is not running. Your parameters have not been uploaded.")
+			ser = None
+			return -1
 
 	def __get_User_Data(self): # Gets programmable parameters from rw class
 		file=RW()
@@ -355,51 +377,68 @@ class Welcome():
 				index+=1
 
 	def __confirm_Reset_Default_Values(self):
-		confirmReset = Tk()
-		confirmReset.geometry(self.popupLocation)
-		confirmReset.title("Reset to default values?")
-
-		def __confirmed(window):
-			window.destroy()
-			if(self.__set_Default_Values() == 0):
-				self.__flashSpinboxParams(0)
-			self.__refresh_Screen()
-
-		Label(confirmReset,text="Are you sure you want to reset to nominal values?").pack()
-		Button(confirmReset,text="Yes, reset to nominal values.",command=lambda:__confirmed(confirmReset)).pack(fill=X)
-		Button(confirmReset,text="No, return to editor.",command=confirmReset.destroy).pack(fill=X)
-
-	def __set_Default_Values(self): # Sets default nominal values for one mode by using the rw class
-		self.__get_Default_Values(self.__mode_Enum())
-		self.__set_User_Data_File()
-		if(self.__set_User_Data_Pacemaker() == 0):
-			self.__write_To_Log("Selected mode "+str(self.mode)+" to run with default parameters")
-			self.__update_Active_Mode_Feedback()
-			return 0
-
-		return -1
-	
-	def __save_Param(self): # Saves the data currently in spinboxes by reading all data, checking if its in range then finally calling the __set_User_Data_File() function 
-		if(self.__check_In_Range()==0): # If the data is bad, it displays an error and reset the spinboxes to what they were at before
-			confirmSave = Tk()
-			confirmSave.geometry(self.popupLocation)
-			confirmSave.title("Run "+self.mode+"?")
+		self.__set_Meta_Status()
+		if(self.commsStatus != 0): # Not 0 means bad status
+			promptWindow2("Error","Communications not established with device. Failed to upload parameters.","FOR THE TAs: Fake a connected board by editing line 172 in Welcome.py to be <self.fakeConnection = 0>")
+		elif(self.boardStatus != 0): # Not 0 means bad status
+			promptWinow("Error","Incorrect board attached. Failed to upload parameters.")
+		else:
+			confirmReset = Tk()
+			confirmReset.geometry(self.popupLocation)
+			confirmReset.title("Reset to default values?")
 
 			def __confirmed(window):
 				window.destroy()
-				self.__get_Vals()
-				self.__set_User_Data_File()
-				if(self.__set_User_Data_Pacemaker() == 0):
-					self.__update_Active_Mode_Feedback()
+				if(self.__set_Default_Values() == 0):
 					self.__flashSpinboxParams(0)
-
 				self.__refresh_Screen()
-	
-			Label(confirmSave,text="Are you sure you want to run "+self.mode+"?").pack()
-			Button(confirmSave,text="Yes, run "+self.mode+".",command=lambda:__confirmed(confirmSave)).pack(fill=X)
-			Button(confirmSave,text="No, return to editor.",command=confirmSave.destroy).pack(fill=X)
+
+			Label(confirmReset,text="Are you sure you want to reset to nominal values?").pack()
+			Button(confirmReset,text="Yes, reset to nominal values.",command=lambda:__confirmed(confirmReset)).pack()
+			Button(confirmReset,text="No, return to editor.",command=confirmReset.destroy).pack()
+
+	def __set_Default_Values(self): # Sets default nominal values for one mode by using the rw class
+		if(self.commsStatus != 0): # Not 0 means bad status
+			promptWindow2("Error","Communications not established with device. Failed to upload parameters.","FOR THE TAs: Fake a connected board by editing line 172 in Welcome.py to be <self.fakeConnection = 0>")
+		elif(self.boardStatus != 0): # Not 0 means bad status
+			promptWinow("Error","Incorrect board attached. Failed to upload parameters.")
 		else:
-			self.__refresh_Screen()
+			self.__get_Default_Values(self.__mode_Enum())
+			self.__set_User_Data_File()
+			if(self.__set_User_Data_Pacemaker() == 0):
+				self.__write_To_Log("Selected mode "+str(self.mode)+" to run with default parameters")
+				self.__update_Active_Mode_Feedback()
+				return 0
+
+			return -1
+		
+	def __save_Param(self): # Saves the data currently in spinboxes by reading all data, checking if its in range then finally calling the __set_User_Data_File() function 
+		self.__set_Meta_Status()
+		if(self.commsStatus != 0): # Not 0 means bad status
+			promptWindow2("Error","Communications not established with device. Failed to upload parameters.","FOR THE TAs: Fake a connected board by editing line 172 in Welcome.py to be <self.fakeConnection = 0>")
+		elif(self.boardStatus != 0): # Not 0 means bad status
+			promptWinow("Error","Incorrect board attached. Failed to upload parameters.")
+		else:
+			if(self.__check_In_Range()==0): # If the data is bad, it displays an error and reset the spinboxes to what they were at before
+				confirmSave = Tk()
+				confirmSave.geometry(self.popupLocation)
+				confirmSave.title("Run "+self.mode+"?")
+
+				def __confirmed(window):
+					window.destroy()
+					self.__get_Vals()
+					self.__set_User_Data_File()
+					if(self.__set_User_Data_Pacemaker() == 0):
+						self.__update_Active_Mode_Feedback()
+						self.__flashSpinboxParams(0)
+
+					self.__refresh_Screen()
+		
+				Label(confirmSave,text="Are you sure you want to run "+self.mode+"?").pack()
+				Button(confirmSave,text="Yes, run "+self.mode+".",command=lambda:__confirmed(confirmSave)).pack()
+				Button(confirmSave,text="No, return to editor.",command=confirmSave.destroy).pack()
+			else:
+				self.__refresh_Screen()
 
 	def __update_Active_Mode_Feedback(self):
 		self.but_Off.config(bg=self.backGroundColour)
@@ -497,70 +536,6 @@ class Welcome():
 				self.afterBlinkID = self.root.after(self.currentDelay,self.__blinkParam,param,step+1)
 				break;
 
-		# if(step == 0):
-		# 	param["bg"] = "gray40"
-		# 	self.root.after(10,self.__blinkParam,param,1)
-		# elif(step == 1):
-		# 	param["bg"] = "gray45"
-		# 	self.root.after(20,self.__blinkParam,param,2)
-		# elif(step == 2):
-		# 	param["bg"] = "gray50"
-		# 	self.root.after(30,self.__blinkParam,param,3)
-		# elif(step == 3):
-		# 	param["bg"] = "gray55"
-		# 	self.root.after(40,self.__blinkParam,param,4)
-		# elif(step == 4):
-		# 	param["bg"] = "gray60"
-		# 	self.root.after(50,self.__blinkParam,param,5)
-		# elif(step == 5):
-		# 	param["bg"] = "gray65"
-		# 	self.root.after(60,self.__blinkParam,param,6)
-		# elif(step == 6):
-		# 	param["bg"] = "gray70"
-		# 	self.root.after(70,self.__blinkParam,param,7)
-		# elif(step == 7):
-		# 	param["bg"] = "gray75"
-		# 	self.root.after(80,self.__blinkParam,param,8)
-		# elif(step == 8):
-		# 	param["bg"] = "gray80"
-		# 	self.root.after(90,self.__blinkParam,param,9)
-		# elif(step == 9):
-		# 	param["bg"] = "gray85"
-		# 	self.root.after(100,self.__blinkParam,param,10)
-		# elif(step == 10):
-		# 	param["bg"] = "gray90"
-		# 	self.root.after(90,self.__blinkParam,param,11)
-		# elif(step == 11):
-		# 	param["bg"] = "gray95"
-		# 	self.root.after(80,self.__blinkParam,param,12)
-		# elif(step == 12):
-		# 	param["bg"] = "gray90"
-		# 	self.root.after(70,self.__blinkParam,param,13)
-		# elif(step == 13):
-		# 	param["bg"] = "gray85"
-		# 	self.root.after(60,self.__blinkParam,param,14)
-		# elif(step == 14):
-		# 	param["bg"] = "gray80"
-		# 	self.root.after(50,self.__blinkParam,param,15)
-		# elif(step == 15):
-		# 	param["bg"] = "gray75"
-		# 	self.root.after(40,self.__blinkParam,param,16)
-		# elif(step == 16):
-		# 	param["bg"] = "gray70"
-		# 	self.root.after(30,self.__blinkParam,param,17)
-		# elif(step == 17):
-		# 	param["bg"] = "gray65"
-		# 	self.root.after(20,self.__blinkParam,param,18)
-		# elif(step == 18):
-		# 	param["bg"] = "gray60"
-		# 	self.root.after(10,self.__blinkParam,param,19)
-		# elif(step == 19):
-		# 	param["bg"] = "gray55"
-		# 	self.root.after(10,self.__blinkParam,param,20)
-		# elif(step == 20):
-		# 	param["bg"] = "gray50"
-		# 	self.root.after(10,self.__blinkParam,param,0)
-		
 		return
 
 	def __refresh_Screen(self):
@@ -728,16 +703,11 @@ class Welcome():
 		Label(welcomeWindow,text="Next, edit the parameters as required, followed by Saving and Running the selected mode").pack()
 		Label(welcomeWindow,text="If you make an error, you can view past actions by clicking the 'Log' button at the bottom right").pack()
 		Label(welcomeWindow,text="You can also load default values if you wish by clicking 'Reset parameters to Nominal' at the bottom").pack()
-		Button(welcomeWindow,text="Okay",command=lambda:__confirmed(welcomeWindow)).pack(fill=X)
+		Button(welcomeWindow,text="Okay",command=lambda:__confirmed(welcomeWindow)).pack()
 
 	def __show_Log(self):
 		self.mainFrame.pack_forget()
 		self.logFrame.pack(side=TOP,fill=BOTH,expand=True)
-		# self.logInfoFrame.pack(side = TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		# self.Info1.pack(side=LEFT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		# self.logTextFrame.pack(side=TOP,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		# self.logFrameScrollbar.pack(side=RIGHT,fill=Y,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		# self.but1_Logout.pack(side=RIGHT)
 
 		logs = RW()
 		self.logContents = logs.get_Logs()
@@ -753,12 +723,9 @@ class Welcome():
 			self.logText.insert(END,line)
 			self.logText.insert(END,"\n")
 
-		self.logText.pack() # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
+		self.logText.pack()
 		#===Need to run this to prevent user edits===#
 		self.logText.config(state=DISABLED)
-
-		# self.logInfoActionsFrame.pack(side=BOTTOM,fill=X,expand=False) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
-		# self.logReturnButton.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 	
 	def __show_Main_Frame(self):
 		self.logFrame.pack_forget()
@@ -876,10 +843,6 @@ class Welcome():
 				self.spinboxParams[index].insert(0,self.progParam[self.__mode_Enum()][index])
 			index+=1
 
-		# if(self.__mode_Enum() == -1):
-		# 	self.but_Save.config(state=DISABLED)
-		# 	self.but_Reset.config(state=DISABLED)
-		# else:
 		self.but_Save.config(state=NORMAL)
 		self.but_Reset.config(state=NORMAL)
 		self.but_ViewLog.config(state=NORMAL)
@@ -931,8 +894,8 @@ class Welcome():
 				self.__show_MODE(mode);
 
 			Label(confirmDoNotSave,text="There are unsaved changes. Do you want to go back and save?").pack()
-			Button(confirmDoNotSave,text="Yes, go back and save changes.",command=confirmDoNotSave.destroy).pack(fill=X)
-			Button(confirmDoNotSave,text="No, switch modes and delete changes.",command=lambda:__confirmed(confirmDoNotSave)).pack(fill=X)
+			Button(confirmDoNotSave,text="Yes, go back and save changes.",command=confirmDoNotSave.destroy).pack()
+			Button(confirmDoNotSave,text="No, switch modes and delete changes.",command=lambda:__confirmed(confirmDoNotSave)).pack()
 		else:
 			self.__show_MODE(mode)
 
@@ -961,8 +924,8 @@ class Welcome():
 				Parent()
 
 			Label(confirm,text="There are unsaved changes. Are you sure you want to logout?").pack()
-			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack(fill=X)
-			Button(confirm,text="No",command=confirm.destroy).pack(fill=X)
+			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack()
+			Button(confirm,text="No",command=confirm.destroy).pack()
 		else:
 			confirm = Tk()
 			confirm.geometry(self.popupLocation)
@@ -992,8 +955,8 @@ class Welcome():
 				self.root.destroy()
 
 			Label(confirm,text="There are unsaved changes. Are you sure you want to exit?").pack()
-			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack(fill=X)
-			Button(confirm,text="No",command=confirm.destroy).pack(fill=X)
+			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack()
+			Button(confirm,text="No",command=confirm.destroy).pack()
 		else:
 			confirm = Tk()
 			confirm.geometry(self.popupLocation)
@@ -1004,8 +967,8 @@ class Welcome():
 				self.root.destroy()
 
 			Label(confirm,text="Are you sure you want to exit?").pack()
-			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack(fill=X)
-			Button(confirm,text="No",command=confirm.destroy).pack(fill=X)
+			Button(confirm,text="Yes",command=lambda:__confirmed(confirm)).pack()
+			Button(confirm,text="No",command=confirm.destroy).pack()
 
 	def __create_Welcome_Window(self): # Creates the main GUI using .pack()
 		# #==Remove title bar===#
@@ -1242,5 +1205,3 @@ class Welcome():
 		self.logReturnButton.pack(side=RIGHT) # DO NOT PACK. PACKING OCCURS IN __show_Log()!!
 
 		self.logFrame.pack_forget()
-
-		self.__welcome_Prompts()
