@@ -1,6 +1,6 @@
-# Pacemaker Digital Communications Module
+# Pacemaker Device Controller Monitor
 
-pAce Of Hearts is a software used to program a pacemaker. The pacemaker is based off of Boston Scientific's pacemaker and uses an STM32 board. Programming was done with patient safety and hardware failure in mind, and software principles such as information hiding were used resulting in an effective and robust application.
+pAce Of Hearts is the software used to program the pAce Of Hearts pacemaker. The pacemaker is based off of Boston Scientific's pacemaker and uses an FRDM-K64F board. Programming was done with patient safety and hardware failure in mind, and software principles such as information hiding were used resulting in an effective and robust application.
 
 10 modes were implemented - AOO,VOO,AAI,VVI,DOO,AOOR,AAIR,VOOR,VVIR, and DOOR. The other modes may implemented very easily by editing the mode encoding.
 
